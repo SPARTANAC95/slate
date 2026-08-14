@@ -49,7 +49,41 @@ app.post('/api/backup', (req, res) => {
   }
 });
 
-// TMDB / RAWG proxy routes land in M3.
+// metadata lookups — a dead provider degrades to empty results, never errors
+import { search, currentDate } from './metadata.js';
+
+app.get('/api/search', async (req, res) => {
+  const q = String(req.query.q ?? '').trim();
+  const kinds = String(req.query.kinds ?? '')
+    .split(',')
+    .filter((k) => ['film', 'series', 'game'].includes(k));
+  if (q.length < 2) return res.json({ results: [] });
+  try {
+    res.json({ results: await search(q, kinds) });
+  } catch {
+    res.json({ results: [] });
+  }
+});
+
+app.get('/api/current-date', async (req, res) => {
+  const { source, kind, id, season, episode } = req.query;
+  if (!id || !['tmdb', 'rawg'].includes(source)) {
+    return res.status(400).json({ ok: false });
+  }
+  try {
+    const result = await currentDate({
+      source,
+      kind,
+      id: String(id),
+      season: season ? Number(season) : undefined,
+      episode: episode ? Number(episode) : undefined,
+    });
+    if (!result) return res.status(503).json({ ok: false });
+    res.json({ ok: true, ...result });
+  } catch {
+    res.status(502).json({ ok: false });
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`slate proxy listening on :${PORT}`);

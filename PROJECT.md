@@ -35,6 +35,7 @@ Single-user personal calendar for tracking upcoming releases (games, films, seri
 
 ## Next actions
 
-- M3 — TMDB/RAWG lookup through the proxy, daily refresh, delay history in the row. Verify both APIs' current terms and free-tier limits first. The parser's `kindSource: 'default'` marks entries whose kind the API match may override.
+- User must create TMDB + RAWG API keys and put them in `.env` (see README) — until then lookup silently returns nothing.
+- M4 — countdown rail (the reminder surface the user asked for), backlog list with drag-to-schedule, "Pick for me" dice roll.
 
 

@@ -4,6 +4,13 @@ import type { Entry } from '../types';
 import { softDeleteEntry } from '../db';
 import { KindDot } from './KindDot';
 import { EntryEditor } from './EntryEditor';
+import { DelayHistory } from './DelayHistory';
+
+const MOVED_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
+const recentlyMovedByApi = (entry: Entry) => {
+  const last = entry.dateHistory[entry.dateHistory.length - 1];
+  return last?.source === 'api' && Date.now() - last.changedAt < MOVED_WINDOW_MS;
+};
 
 const hostname = (url: string) => {
   try {
@@ -32,7 +39,13 @@ export function EntryRow({ entry }: { entry: Entry }) {
         {entry.notes && (
           <span className="block truncate text-11 text-text-3">{entry.notes}</span>
         )}
+        <DelayHistory entry={entry} />
       </span>
+      {recentlyMovedByApi(entry) && (
+        <span className="shrink-0 rounded-[5px] border border-line px-1 text-11 leading-4 text-text-2">
+          moved
+        </span>
+      )}
       {entry.links.map((url) => (
         <a
           key={url}

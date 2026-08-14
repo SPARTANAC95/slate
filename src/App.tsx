@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { purgeExpiredDeleted } from './db';
 import { requestPersistentStorage, startBackups } from './db/backup';
+import { markRefreshed, refreshExternalDates, shouldAutoRefresh } from './db/refresh';
 import { useLiveEntries } from './db/hooks';
 import { fromISODate, monthName, todayISO } from './lib/dates';
 import { MonthGrid } from './components/MonthGrid';
@@ -13,12 +14,23 @@ export default function App() {
   const [cursor, setCursor] = useState({ year: now.getFullYear(), month: now.getMonth() });
   const [direction, setDirection] = useState<'next' | 'prev' | null>(null);
   const [selected, setSelected] = useState<string>(todayISO());
+  const [refreshNote, setRefreshNote] = useState<string | null>(null);
   const entries = useLiveEntries() ?? [];
+
+  const runRefresh = async () => {
+    setRefreshNote('checking…');
+    const { checked, moved } = await refreshExternalDates();
+    markRefreshed();
+    setRefreshNote(checked === 0 ? 'nothing to refresh' : `checked ${checked} — ${moved} moved`);
+    setTimeout(() => setRefreshNote(null), 5000);
+  };
 
   useEffect(() => {
     purgeExpiredDeleted();
     requestPersistentStorage();
+    if (shouldAutoRefresh()) runRefresh(); // once per day on open
     return startBackups();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const move = (delta: -1 | 1) => {
@@ -53,6 +65,17 @@ export default function App() {
           <span className="font-mono text-18 font-normal text-text-2">{cursor.year}</span>
         </h1>
         <div className="flex items-center justify-end gap-1">
+          {refreshNote && <span className="mr-2 text-11 text-text-3">{refreshNote}</span>}
+          <button
+            type="button"
+            onClick={runRefresh}
+            disabled={refreshNote === 'checking…'}
+            aria-label="refresh dates"
+            title="Refresh dates"
+            className="mr-1 rounded-lg border border-line p-1.5 text-text-2 transition-colors duration-150 hover:bg-panel-hover hover:text-text disabled:opacity-60"
+          >
+            <RefreshCw size={14} />
+          </button>
           <button
             type="button"
             onClick={() => move(-1)}
