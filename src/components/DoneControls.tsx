@@ -1,15 +1,16 @@
-import { useEffect, useState } from 'react';
 import type { Entry } from '../types';
 import { updateEntry } from '../db';
+import { useAutosaveText } from '../lib/useAutosaveText';
 
 /** revealed once an entry is done: 1–5 rating squares and a one-line verdict */
 export function DoneControls({ entry }: { entry: Entry }) {
-  const [verdict, setVerdict] = useState(entry.verdict);
-  useEffect(() => setVerdict(entry.verdict), [entry.id, entry.verdict]);
-
-  const save = () => {
-    if (verdict !== entry.verdict) updateEntry(entry.id, { verdict });
-  };
+  const verdict = useAutosaveText({
+    stored: entry.verdict,
+    resetKey: entry.id,
+    save: (text) => {
+      if (text !== entry.verdict) updateEntry(entry.id, { verdict: text });
+    },
+  });
 
   return (
     <span className="mt-1 flex items-center gap-2">
@@ -31,9 +32,9 @@ export function DoneControls({ entry }: { entry: Entry }) {
         ))}
       </span>
       <input
-        value={verdict}
-        onChange={(e) => setVerdict(e.target.value)}
-        onBlur={save}
+        value={verdict.value}
+        onChange={(e) => verdict.onChange(e.target.value)}
+        onBlur={verdict.flush}
         onKeyDown={(e) => {
           if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
         }}

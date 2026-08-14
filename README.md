@@ -50,6 +50,12 @@ Target: Chrome on desktop, ≥900px wide.
 - **M5 — the log: done.** Entries whose date has passed get a `Mark done` action in the row; done reveals five rating squares (click again to clear) and a one-line verdict that saves on blur or Enter. The `year` toggle shows twelve columns of day squares, intensity by how much was logged that day, monochrome; hover shows the day's titles, click jumps to the day. Squares scale up on 2K/4K screens.
 - **M6 — command palette, data, polish: done.** `ctrl k` opens the palette: search titles, type a date to jump (`19.11.`, `friday`, `sutra` all work), create entries, toggle year view, export, import, restore deleted (30-day window). Keyboard shortcuts throughout, with a `?` sheet. Export downloads one JSON file; import shows a diff summary (`+N new · M updated · K unchanged`, newest `updatedAt` wins) before committing. Thin dark scrollbars for Windows Chrome.
 
+## Saving
+
+There is no save button anywhere, and nothing is ever staged. Adding, editing, scheduling, deleting, rating and marking done write to the database the moment you act. The two free-text fields — the day note and the one-line verdict — commit 500ms after you stop typing, and also on blur, on switching day or entry, and whenever the window is hidden or closed, so quitting to the tray mid-sentence keeps what you wrote.
+
+On top of that the whole database is mirrored to a JSON file on disk two seconds after any change, with the previous twenty versions kept beside it.
+
 ## Reminders
 
 The desktop app nudges you once a day about whatever is scheduled, as a Windows toast. Closing the window leaves slate in the tray so the reminder still arrives; quit properly from the tray menu. Turn reminders off, or enable start-with-Windows, in `ctrl k` → `preferences`.
