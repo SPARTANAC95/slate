@@ -97,11 +97,11 @@ export function QuickAdd({ onAdded }: Props) {
         <div className="flex items-center gap-2.5 rounded-lg border border-line bg-panel px-3 transition-colors duration-150 focus-within:border-line-strong">
           <Plus size={14} className="shrink-0 text-text-3" />
           <input
-            autoFocus
+            id="quick-add"
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Silo s3e4 tomorrow · GTA 6 19.11. · dentist in 3 days · #film Dune dec 18"
+            placeholder="Silo s3e4 tomorrow · GTA 6 19.11. · #film Dune dec 18 2026"
             aria-label="quick add"
             className="h-9 min-w-0 flex-1 bg-transparent text-13 text-text outline-none"
           />

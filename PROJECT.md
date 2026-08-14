@@ -33,9 +33,12 @@ Single-user personal calendar for tracking upcoming releases (games, films, seri
 - User (2026-08-14): "make sure everything syncs and saves on device" → persistent-storage request + automatic on-disk backup (`data/slate-backup.json`, rotated history) via the local proxy. No cloud sync — cross-machine moves stay export/import (M6).
 - User (2026-08-14): entries can carry links ("check out the trailer") → `links: string[]` on Entry (Dexie v2 migration), quiet external-link icons in the row; entry `notes` exposed in the editor and shown as a second line.
 
+- Windows is the target platform (user, 2026-08-14): `ctrl k` chords, Windows-styled thin scrollbars, keys shown as `ctrl` in the help sheet. Example copy kept professional/media-focused per user note.
+- "Always-focused quick add" (M2 spec) conflicts with single-letter shortcuts (M6): shortcuts won. The input is focused once on open and via `n`; autoFocus on remount would swallow arrows/letters after a view switch.
+
 ## Next actions
 
-- User must create TMDB + RAWG API keys and put them in `.env` (see README) — until then lookup silently returns nothing.
-- M6 — command palette (cmdk), keyboard shortcuts + `?` sheet, export/import with diff summary, restore deleted, empty states.
+- All six milestones delivered. Remaining for the user: create TMDB + RAWG keys → `.env` (README) — until then lookup silently returns nothing.
+- Possible follow-up if asked: package as a real Windows desktop app (Tauri would fit — small, no Chrome dependency) and/or a `start-slate.cmd` launcher.
 
 

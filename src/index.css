@@ -100,6 +100,12 @@ body {
   ::selection {
     background: rgba(255, 255, 255, 0.14);
   }
+
+  /* windows chrome scrollbars, matched to the hairline system */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+  }
 }
 
 /* component classes live in the components layer so utilities can override them */

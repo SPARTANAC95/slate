@@ -20,7 +20,7 @@ Target: Chrome on desktop, ≥900px wide.
 - **M3 — metadata lookup and delay tracking: done.** Typing in quick add searches TMDB (films, series) and RAWG (games) through the proxy, 300ms debounced, up to 5 results with year and poster; arrow keys + Enter to pick. Picking fills title, kind, date, and poster; a typed date always wins, and `sNeM` series pull the exact episode air date. `Refresh dates` (header) re-checks every non-done API-linked entry — automatically once per day on open. A moved date appends to `dateHistory` and the row shows the trail: original struck through, every later date, `delayed 2×, 208 days total`. No keys / dead network degrades silently to manual entry.
 - **M4 — countdown rail and backlog: done.** The rail above the grid shows the next 6 dated entries as big monospace day counts (`TODAY` and `TOMORROW` are words); past-but-not-done entries sit at the front on an elevated card with a negative count. Clicking a card jumps to its day. The `backlog N` toggle (header, left) opens a column of everything undated — drag a row onto any day cell to schedule it, or edit it inline for the keyboard path. `Pick for me` rolls a die over the backlog filtered by kind and rough time (`~30min` → series/task/note, `an evening` → film/series, `a weekend` → game), with re-roll and one-click `Schedule today`/`tomorrow`.
 - **M5 — the log: done.** Entries whose date has passed get a `Mark done` action in the row; done reveals five rating squares (click again to clear) and a one-line verdict that saves on blur or Enter. The `year` toggle shows twelve columns of day squares, intensity by how much was logged that day, monochrome; hover shows the day's titles, click jumps to the day. Squares scale up on 2K/4K screens.
-- M6 palette/export: not started.
+- **M6 — command palette, data, polish: done.** `ctrl k` opens the palette: search titles, type a date to jump (`19.11.`, `friday`, `sutra` all work), create entries, toggle year view, export, import, restore deleted (30-day window). Keyboard shortcuts throughout, with a `?` sheet. Export downloads one JSON file; import shows a diff summary (`+N new · M updated · K unchanged`, newest `updatedAt` wins) before committing. Thin dark scrollbars for Windows Chrome.
 
 ## API keys
 
@@ -35,11 +35,21 @@ This product uses the TMDB API but is not endorsed or certified by TMDB. Game da
 
 ## Keyboard shortcuts
 
-Land in M6. (`n` quick add, `/` search, `←`/`→` month, `t` today, `y` year view, `Esc` close.)
+| key | action |
+|---|---|
+| `ctrl k` | command palette |
+| `n` | focus quick add |
+| `/` | search (palette) |
+| `←` `→` | previous / next month (year in year view) |
+| `t` | today |
+| `y` | year view |
+| `b` | backlog |
+| `?` | shortcut sheet |
+| `esc` | close whatever is open |
 
 ## Export format
 
-Lands in M6: a single JSON file `{ entries: Entry[], dayNotes: DayNote[] }` — see `src/types.ts`. Import merges by id, newest `updatedAt` wins.
+One JSON file: `{ version: 1, exportedAt, entries: Entry[], dayNotes: DayNote[] }` — field shapes in `src/types.ts`. The automatic on-disk backup (`data/slate-backup.json`) uses the identical shape, so a backup is also a valid import. Import merges by id; for each id the newer `updatedAt` wins, and a diff summary is shown before anything is written.
 
 ## Tests
 
