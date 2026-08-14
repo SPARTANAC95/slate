@@ -10,6 +10,7 @@ import { DayPanel } from './components/DayPanel';
 import { QuickAdd } from './components/QuickAdd';
 import { CountdownRail } from './components/CountdownRail';
 import { Backlog } from './components/Backlog';
+import { YearView } from './components/YearView';
 
 export default function App() {
   const now = new Date();
@@ -18,6 +19,8 @@ export default function App() {
   const [selected, setSelected] = useState<string>(todayISO());
   const [refreshNote, setRefreshNote] = useState<string | null>(null);
   const [showBacklog, setShowBacklog] = useState(false);
+  const [view, setView] = useState<'month' | 'year'>('month');
+  const [yearCursor, setYearCursor] = useState(now.getFullYear());
   const entries = useLiveEntries() ?? [];
   const backlogCount = entries.filter((e) => e.date === null).length;
 
@@ -38,6 +41,7 @@ export default function App() {
   }, []);
 
   const move = (delta: -1 | 1) => {
+    if (view === 'year') return setYearCursor((y) => y + delta);
     setDirection(delta === 1 ? 'next' : 'prev');
     setCursor(({ year, month }) => {
       const d = new Date(year, month + delta, 1);
@@ -48,6 +52,7 @@ export default function App() {
   const jumpTo = (date: string | null) => {
     if (!date) return;
     const d = fromISODate(date);
+    setView('month');
     setDirection(null);
     setCursor({ year: d.getFullYear(), month: d.getMonth() });
     setSelected(date);
@@ -55,6 +60,7 @@ export default function App() {
 
   const goToday = () => {
     const t = new Date();
+    setView('month');
     setDirection(null);
     setCursor({ year: t.getFullYear(), month: t.getMonth() });
     setSelected(todayISO());
@@ -75,10 +81,26 @@ export default function App() {
           >
             backlog <span className="font-mono text-11 text-text-3">{backlogCount}</span>
           </button>
+          <button
+            type="button"
+            onClick={() => setView((v) => (v === 'year' ? 'month' : 'year'))}
+            aria-pressed={view === 'year'}
+            className={`rounded-lg border px-2.5 py-1 text-12 transition-colors duration-150 hover:bg-panel-hover hover:text-text ${
+              view === 'year' ? 'border-line-strong bg-panel-hover text-text' : 'border-line text-text-2'
+            }`}
+          >
+            year
+          </button>
         </span>
         <h1 className="text-18 font-semibold tracking-[-0.02em]">
-          {monthName(cursor.month)}{' '}
-          <span className="font-mono text-18 font-normal text-text-2">{cursor.year}</span>
+          {view === 'year' ? (
+            <span className="font-mono font-normal">{yearCursor}</span>
+          ) : (
+            <>
+              {monthName(cursor.month)}{' '}
+              <span className="font-mono text-18 font-normal text-text-2">{cursor.year}</span>
+            </>
+          )}
         </h1>
         <div className="flex items-center justify-end gap-1">
           {refreshNote && <span className="mr-2 text-11 text-text-3">{refreshNote}</span>}
@@ -119,23 +141,29 @@ export default function App() {
       </header>
 
       <div className="flex min-h-0 flex-1 gap-5 px-7 pb-6">
-        {showBacklog && <Backlog entries={entries} />}
-        <main className="flex min-w-0 flex-1 flex-col">
-          <QuickAdd onAdded={jumpTo} />
-          <CountdownRail entries={entries} onJump={jumpTo} />
-          <div className="min-h-0 flex-1">
-            <MonthGrid
-              year={cursor.year}
-              month={cursor.month}
-              direction={direction}
-              entries={entries}
-              selected={selected}
-              onSelect={setSelected}
-            />
-          </div>
-        </main>
+        {view === 'year' ? (
+          <YearView entries={entries} year={yearCursor} onJumpToDay={jumpTo} />
+        ) : (
+          <>
+            {showBacklog && <Backlog entries={entries} />}
+            <main className="flex min-w-0 flex-1 flex-col">
+              <QuickAdd onAdded={jumpTo} />
+              <CountdownRail entries={entries} onJump={jumpTo} />
+              <div className="min-h-0 flex-1">
+                <MonthGrid
+                  year={cursor.year}
+                  month={cursor.month}
+                  direction={direction}
+                  entries={entries}
+                  selected={selected}
+                  onSelect={setSelected}
+                />
+              </div>
+            </main>
 
-        <DayPanel date={selected} entries={entries} />
+            <DayPanel date={selected} entries={entries} />
+          </>
+        )}
       </div>
     </div>
   );

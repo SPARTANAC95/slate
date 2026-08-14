@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { ExternalLink, Pencil, X } from 'lucide-react';
+import { Check, ExternalLink, Pencil, X } from 'lucide-react';
 import type { Entry } from '../types';
-import { softDeleteEntry } from '../db';
+import { softDeleteEntry, updateEntry } from '../db';
+import { todayISO } from '../lib/dates';
 import { KindDot } from './KindDot';
 import { EntryEditor } from './EntryEditor';
 import { DelayHistory } from './DelayHistory';
+import { DoneControls } from './DoneControls';
 
 const MOVED_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
 const recentlyMovedByApi = (entry: Entry) => {
@@ -48,12 +50,35 @@ export function EntryRow({ entry, draggable = false }: { entry: Entry; draggable
     >
       <span className="mt-[7px] flex"><KindDot kind={entry.kind} /></span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-13">{entry.title}</span>
+        <span className={`block truncate text-13 ${entry.done ? 'text-text-2 line-through' : ''}`}>
+          {entry.title}
+        </span>
         {entry.notes && (
           <span className="block truncate text-11 text-text-3">{entry.notes}</span>
         )}
         <DelayHistory entry={entry} />
+        {entry.done && <DoneControls entry={entry} />}
       </span>
+      {!entry.done && !entry.annual && entry.date !== null && entry.date <= todayISO() && (
+        <button
+          type="button"
+          onClick={() => updateEntry(entry.id, { done: true })}
+          className="shrink-0 rounded-lg border border-line px-2 py-0.5 text-11 text-text-2 transition-colors duration-150 hover:bg-panel-hover hover:text-text"
+        >
+          Mark done
+        </button>
+      )}
+      {entry.done && (
+        <button
+          type="button"
+          onClick={() => updateEntry(entry.id, { done: false })}
+          aria-label={`mark ${entry.title} not done`}
+          title="mark not done"
+          className="shrink-0 rounded p-1 text-text-2 hover:text-text"
+        >
+          <Check size={13} />
+        </button>
+      )}
       {recentlyMovedByApi(entry) && (
         <span className="shrink-0 rounded-[5px] border border-line px-1 text-11 leading-4 text-text-2">
           moved

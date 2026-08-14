@@ -36,6 +36,6 @@ Single-user personal calendar for tracking upcoming releases (games, films, seri
 ## Next actions
 
 - User must create TMDB + RAWG API keys and put them in `.env` (see README) — until then lookup silently returns nothing.
-- M5 — Done action + rating/verdict once a date has passed, and the Year view (12 columns of intensity squares — "the best-looking screen in the app").
+- M6 — command palette (cmdk), keyboard shortcuts + `?` sheet, export/import with diff summary, restore deleted, empty states.
 
 
