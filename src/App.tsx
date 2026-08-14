@@ -3,9 +3,10 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { purgeExpiredDeleted } from './db';
 import { requestPersistentStorage, startBackups } from './db/backup';
 import { useLiveEntries } from './db/hooks';
-import { monthName, todayISO } from './lib/dates';
+import { fromISODate, monthName, todayISO } from './lib/dates';
 import { MonthGrid } from './components/MonthGrid';
 import { DayPanel } from './components/DayPanel';
+import { QuickAdd } from './components/QuickAdd';
 
 export default function App() {
   const now = new Date();
@@ -26,6 +27,14 @@ export default function App() {
       const d = new Date(year, month + delta, 1);
       return { year: d.getFullYear(), month: d.getMonth() };
     });
+  };
+
+  const jumpTo = (date: string | null) => {
+    if (!date) return;
+    const d = fromISODate(date);
+    setDirection(null);
+    setCursor({ year: d.getFullYear(), month: d.getMonth() });
+    setSelected(date);
   };
 
   const goToday = () => {
@@ -72,14 +81,17 @@ export default function App() {
 
       <div className="flex min-h-0 flex-1 gap-5 px-7 pb-6">
         <main className="flex min-w-0 flex-1 flex-col">
-          <MonthGrid
-            year={cursor.year}
-            month={cursor.month}
-            direction={direction}
-            entries={entries}
-            selected={selected}
-            onSelect={setSelected}
-          />
+          <QuickAdd onAdded={jumpTo} />
+          <div className="min-h-0 flex-1">
+            <MonthGrid
+              year={cursor.year}
+              month={cursor.month}
+              direction={direction}
+              entries={entries}
+              selected={selected}
+              onSelect={setSelected}
+            />
+          </div>
         </main>
 
         <DayPanel date={selected} entries={entries} />

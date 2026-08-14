@@ -35,6 +35,6 @@ Single-user personal calendar for tracking upcoming releases (games, films, seri
 
 ## Next actions
 
-- M2 — quick add with date parsing (EN + BS date words), live parse preview, parser unit tests.
+- M3 — TMDB/RAWG lookup through the proxy, daily refresh, delay history in the row. Verify both APIs' current terms and free-tier limits first. The parser's `kindSource: 'default'` marks entries whose kind the API match may override.
 
 
