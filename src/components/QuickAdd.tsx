@@ -101,7 +101,7 @@ export function QuickAdd({ onAdded }: Props) {
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Silo s3e4 tomorrow · GTA 6 19.11. · #film Dune dec 18 2026"
+            placeholder="title s2e4 tomorrow · title 19.11. · #film title dec 18 2026"
             aria-label="quick add"
             className="h-9 min-w-0 flex-1 bg-transparent text-13 text-text outline-none"
           />

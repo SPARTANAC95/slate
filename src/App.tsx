@@ -130,10 +130,9 @@ export default function App() {
               <QuickAdd onAdded={jumpTo} />
               {entries.length === 0 && (
                 <p className="mb-3 px-3 text-12 text-text-3">
-                  nothing scheduled yet — type{' '}
-                  <span className="font-mono text-text-2">GTA 6 19.11.</span> above and press
-                  enter, or <span className="font-mono text-text-2">ctrl k</span> for everything
-                  else
+                  nothing scheduled yet — type a title and a date above, like{' '}
+                  <span className="font-mono text-text-2">title 19.11.</span>, and press enter
+                  — <span className="font-mono text-text-2">ctrl k</span> for everything else
                 </p>
               )}
               <CountdownRail entries={entries} onJump={jumpTo} />
