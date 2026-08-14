@@ -7,12 +7,25 @@ slate runs two ways from one codebase:
 - **Windows app** (recommended) — its own window, taskbar icon, tray, and toast reminders. No terminal, no browser.
 - **Browser + dev server** — for development.
 
-## Setup — Windows app
+## Launching it
+
+Double-click **Slate** on the Desktop, or search "Slate" in the Start Menu — right-click it there to pin it to the taskbar. `slate.cmd` in this folder does the same from a terminal, and builds the app first if it has never been built.
+
+To recreate the shortcuts on a new machine, or after moving the project:
+
+```
+powershell -File tools/New-Shortcuts.ps1
+powershell -File tools/New-Shortcuts.ps1 -Remove   # undo
+```
+
+There is also a real installer at `src-tauri/target/release/bundle/nsis/Slate_0.1.0_x64-setup.exe` if you would rather install it properly — that adds a Windows uninstall entry.
+
+## Building the Windows app
 
 ```
 npm install
-npm run dev:app      # run it
-npm run build:app    # produce an installer in src-tauri/target/release/bundle/nsis/
+npm run dev:app      # run with hot reload
+npm run build:app    # rebuild the exe and the installer
 ```
 
 Needs Rust (`rustup`) and the MSVC build tools. API keys go in the app itself: `ctrl k` → `preferences`.
