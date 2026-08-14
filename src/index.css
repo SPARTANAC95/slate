@@ -1,0 +1,119 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-bg: #0a0a0b;
+  --color-panel: #121214;
+  --color-panel-hover: #171719;
+  --color-line: rgba(255, 255, 255, 0.07);
+  --color-line-strong: rgba(255, 255, 255, 0.13);
+  --color-text: #ededf0;
+  --color-text-2: #93939c;
+  --color-text-3: #5c5c66;
+
+  /* kind dots — the only saturated color anywhere in the app */
+  --color-kind-game: #a78bfa;
+  --color-kind-film: #e8b84b;
+  --color-kind-series: #7dd3fc;
+  --color-kind-event: #f0abfc;
+  --color-kind-task: #86efac;
+  --color-kind-note: #93939c;
+
+  --font-sans: 'Inter Variable', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Mono', monospace;
+
+  --text-11: 11px;
+  --text-12: 12px;
+  --text-13: 13px;
+  --text-14: 14px;
+  --text-18: 18px;
+  --text-32: 32px;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  /* single near-invisible radial lift at the top — the only gradient in the app */
+  background:
+    radial-gradient(640px 320px at 50% 0%, rgba(255, 255, 255, 0.028), transparent 70%),
+    var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--text-13);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+:focus-visible {
+  outline: 1px solid var(--color-line-strong);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::placeholder {
+  color: var(--color-text-3);
+}
+
+::selection {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* faint top-lit edge on panels — a hairline gradient, not a shadow */
+.panel-lit {
+  position: relative;
+}
+.panel-lit::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10px;
+  right: 10px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.11), transparent);
+  pointer-events: none;
+}
+
+/* 11px all-caps section label */
+.section-label {
+  font-size: var(--text-11);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-3);
+}
+
+/* month change: content slides 8px in the direction of travel and fades */
+@keyframes month-from-right {
+  from { opacity: 0; transform: translateX(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes month-from-left {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: none; }
+}
+.month-enter-next { animation: month-from-right 150ms ease-out; }
+.month-enter-prev { animation: month-from-left 150ms ease-out; }
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: none; }
+}
+.fade-in { animation: fade-in 130ms ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (max-width: 900px) {
+  #root { display: none; }
+  body::after {
+    content: 'slate needs a bigger screen — open it on desktop.';
+    display: block;
+    padding: 48px 24px;
+    color: var(--color-text-2);
+  }
+}
