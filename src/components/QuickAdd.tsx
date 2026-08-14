@@ -5,6 +5,7 @@ import { addEntry } from '../db';
 import { parseQuickAdd } from '../lib/parse';
 import { fromISODate } from '../lib/dates';
 import { fetchCurrentDate, useMetadataSearch, type LookupResult } from '../lib/lookup';
+import { useRotatingExample } from '../lib/useRotatingExample';
 import { KindDot } from './KindDot';
 import { SearchDropdown } from './SearchDropdown';
 
@@ -15,6 +16,7 @@ const EXTERNAL = new Set(['film', 'series', 'game']);
 export function QuickAdd({ onAdded }: Props) {
   const [value, setValue] = useState('');
   const [highlight, setHighlight] = useState(-1);
+  const example = useRotatingExample();
   const parsed = value.trim() ? parseQuickAdd(value) : null;
 
   // #film narrows the search; #task etc. disables it; otherwise search everything
@@ -101,9 +103,11 @@ export function QuickAdd({ onAdded }: Props) {
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="season premiere s2e4 friday · game launch 19.11. · #film release dec 18 2026"
+            placeholder={example.text}
             aria-label="quick add"
-            className="h-9 min-w-0 flex-1 bg-transparent text-13 text-text outline-none"
+            className={`h-9 min-w-0 flex-1 bg-transparent text-13 text-text outline-none ${
+              example.fading ? 'ph-fade' : ''
+            }`}
           />
         </div>
         {open && (

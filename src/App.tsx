@@ -131,7 +131,7 @@ export default function App() {
               {entries.length === 0 && (
                 <p className="mb-3 px-3 text-12 text-text-3">
                   nothing scheduled yet — type a title and a date above, like{' '}
-                  <span className="font-mono text-text-2">game launch 19.11.</span>, and press
+                  <span className="font-mono text-text-2">album drop oct 22</span>, and press
                   enter — <span className="font-mono text-text-2">ctrl k</span> for everything
                   else
                 </p>

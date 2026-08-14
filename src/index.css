@@ -95,6 +95,7 @@ body {
 
   ::placeholder {
     color: var(--color-text-3);
+    transition: opacity 150ms ease-out;
   }
 
   ::selection {
@@ -123,6 +124,11 @@ body {
     height: 1px;
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.11), transparent);
     pointer-events: none;
+  }
+
+  /* mid-swap state for the rotating placeholder example */
+  .ph-fade::placeholder {
+    opacity: 0;
   }
 
   /* 11px all-caps section label */
