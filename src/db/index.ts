@@ -11,6 +11,12 @@ class SlateDB extends Dexie {
       entries: 'id, date, kind, updatedAt',
       dayNotes: 'date',
     });
+    // v2: entries grew a non-indexed `links` field
+    this.version(2).upgrade((tx) =>
+      tx.table('entries').toCollection().modify((e) => {
+        if (!Array.isArray(e.links)) e.links = [];
+      }),
+    );
   }
 }
 
@@ -24,6 +30,7 @@ export type NewEntry = {
   date: string | null;
   annual?: boolean;
   notes?: string;
+  links?: string[];
   tags?: string[];
   series?: Entry['series'];
   external?: Entry['external'];
@@ -43,6 +50,7 @@ export async function addEntry(input: NewEntry): Promise<Entry> {
     rating: null,
     verdict: '',
     notes: input.notes ?? '',
+    links: input.links ?? [],
     tags: input.tags ?? [],
     external: input.external ?? null,
     series: input.series ?? null,

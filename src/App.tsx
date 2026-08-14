@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { purgeExpiredDeleted } from './db';
+import { requestPersistentStorage, startBackups } from './db/backup';
 import { useLiveEntries } from './db/hooks';
 import { monthName, todayISO } from './lib/dates';
 import { MonthGrid } from './components/MonthGrid';
@@ -15,6 +16,8 @@ export default function App() {
 
   useEffect(() => {
     purgeExpiredDeleted();
+    requestPersistentStorage();
+    return startBackups();
   }, []);
 
   const move = (delta: -1 | 1) => {

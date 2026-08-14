@@ -24,6 +24,8 @@ export type Entry = {
   verdict: string;
   /** free-form, written before the date */
   notes: string;
+  /** related urls — trailer, store page, article */
+  links: string[];
   tags: string[];
   /** links to external metadata if it came from an API */
   external: { source: 'tmdb' | 'rawg'; id: string; posterUrl: string | null } | null;

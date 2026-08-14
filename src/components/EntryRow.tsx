@@ -1,9 +1,17 @@
 import { useState } from 'react';
-import { Pencil, X } from 'lucide-react';
+import { ExternalLink, Pencil, X } from 'lucide-react';
 import type { Entry } from '../types';
 import { softDeleteEntry } from '../db';
 import { KindDot } from './KindDot';
 import { EntryEditor } from './EntryEditor';
+
+const hostname = (url: string) => {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return url;
+  }
+};
 
 export function EntryRow({ entry }: { entry: Entry }) {
   const [editing, setEditing] = useState(false);
@@ -17,9 +25,27 @@ export function EntryRow({ entry }: { entry: Entry }) {
   }
 
   return (
-    <li className="group -mx-1.5 flex items-center gap-2 rounded-lg px-1.5 py-1.5 transition-colors duration-150 hover:bg-panel-hover">
-      <KindDot kind={entry.kind} />
-      <span className="min-w-0 flex-1 truncate text-13">{entry.title}</span>
+    <li className="group -mx-1.5 flex items-start gap-2 rounded-lg px-1.5 py-1.5 transition-colors duration-150 hover:bg-panel-hover">
+      <span className="mt-[7px] flex"><KindDot kind={entry.kind} /></span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-13">{entry.title}</span>
+        {entry.notes && (
+          <span className="block truncate text-11 text-text-3">{entry.notes}</span>
+        )}
+      </span>
+      {entry.links.map((url) => (
+        <a
+          key={url}
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`open ${hostname(url)}`}
+          title={url}
+          className="rounded p-1 text-text-3 transition-colors duration-150 hover:text-text"
+        >
+          <ExternalLink size={13} />
+        </a>
+      ))}
       {entry.series && (
         <span className="font-mono text-11 text-text-2">
           s{entry.series.season}e{entry.series.episode}

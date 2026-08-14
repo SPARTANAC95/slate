@@ -30,6 +30,8 @@ Single-user personal calendar for tracking upcoming releases (games, films, seri
 - User emphasis (2026-08-14): the app is also a *reminder* surface — "I should check out this series today" — so upcoming things must be visible without digging (countdown rail in M4, today-first). Motion should feel premium and satisfying: polished, orchestrated, still within the 120–160ms ease-out restraint of the spec.
 - `useLiveQuery` results get tagged with the key they were queried for (see `useDayNote`) — on a key switch the hook briefly reports the previous result, which otherwise corrupts local editing state.
 - Milestones are committed one at a time; each must be seen running before the next starts.
+- User (2026-08-14): "make sure everything syncs and saves on device" → persistent-storage request + automatic on-disk backup (`data/slate-backup.json`, rotated history) via the local proxy. No cloud sync — cross-machine moves stay export/import (M6).
+- User (2026-08-14): entries can carry links ("check out the trailer") → `links: string[]` on Entry (Dexie v2 migration), quiet external-link icons in the row; entry `notes` exposed in the editor and shown as a second line.
 
 ## Next actions
 

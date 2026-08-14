@@ -14,7 +14,8 @@ Target: Chrome on desktop, ≥900px wide.
 
 ## Status
 
-- **M1 — calendar and entries: done.** Monday-first month grid, day panel with inline entry add/edit/delete, per-day note with debounced autosave, soft delete (30-day retention), date changes append to `dateHistory`.
+- **M1 — calendar and entries: done.** Monday-first month grid, day panel with inline entry add/edit/delete (incl. links and notes per entry), per-day note with debounced autosave, soft delete (30-day retention), date changes append to `dateHistory`.
+- **On-device safety:** the app requests persistent storage (no browser eviction) and mirrors the whole database to `data/slate-backup.json` on every change (2s debounce + a beacon on tab close) while the dev server runs. Previous versions rotate into `data/history/` (last 20), so an empty browser profile can never destroy the only good backup. The file uses the same shape the M6 export/import will use.
 - M2 quick add + parsing, M3 metadata/delays, M4 countdown/backlog, M5 log/year view, M6 palette/export: not started.
 
 ## Keyboard shortcuts

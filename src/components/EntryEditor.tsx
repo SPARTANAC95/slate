@@ -22,15 +22,22 @@ export function EntryEditor({ entry, date, onDone }: Props) {
   const [annual, setAnnual] = useState(entry?.annual ?? false);
   const [season, setSeason] = useState(entry?.series?.season ?? 1);
   const [episode, setEpisode] = useState(entry?.series?.episode ?? 1);
+  const [linksText, setLinksText] = useState(entry?.links.join(' ') ?? '');
+  const [notes, setNotes] = useState(entry?.notes ?? '');
 
   const submit = async () => {
     if (!title.trim()) return;
     const series = kind === 'series' ? { season, episode } : null;
     const dateOrNull = dateVal === '' ? null : dateVal;
+    const links = linksText
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((u) => (/^https?:\/\//i.test(u) ? u : `https://${u}`));
+    const patch = { title: title.trim(), kind, date: dateOrNull, annual, series, links, notes };
     if (entry) {
-      await updateEntry(entry.id, { title: title.trim(), kind, date: dateOrNull, annual, series });
+      await updateEntry(entry.id, patch);
     } else {
-      await addEntry({ title, kind, date: dateOrNull, annual, series });
+      await addEntry(patch);
     }
     onDone();
   };
@@ -98,6 +105,21 @@ export function EntryEditor({ entry, date, onDone }: Props) {
           </label>
         </div>
       )}
+      <input
+        value={linksText}
+        onChange={(e) => setLinksText(e.target.value)}
+        placeholder="links — paste urls, separated by spaces"
+        aria-label="links"
+        className={`${field} font-mono text-12`}
+      />
+      <textarea
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        placeholder="notes"
+        aria-label="notes"
+        rows={2}
+        className={`${field} resize-y`}
+      />
       <label className="flex items-center gap-2 text-12 text-text-2">
         <input
           type="checkbox"
