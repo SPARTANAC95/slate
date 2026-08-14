@@ -5,6 +5,7 @@ import {
   getMonth,
   isSameDay,
   parseISO,
+  startOfDay,
   startOfMonth,
   startOfWeek,
 } from 'date-fns';
@@ -43,6 +44,18 @@ export function occursOn(
 }
 
 export const isToday = (d: Date): boolean => isSameDay(d, new Date());
+
+/** the next calendar occurrence (today counts) of an annual entry's month/day */
+export function nextAnnualOccurrence(dateISO: string, from: Date): string {
+  const d = fromISODate(dateISO);
+  const floor = startOfDay(from);
+  for (let y = from.getFullYear(); y < from.getFullYear() + 9; y++) {
+    const cand = new Date(y, d.getMonth(), d.getDate());
+    // month mismatch = invalid day that year (Feb 29 in a non-leap year)
+    if (cand.getMonth() === d.getMonth() && cand >= floor) return toISODate(cand);
+  }
+  return dateISO;
+}
 
 export const WEEKDAY_LABELS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 

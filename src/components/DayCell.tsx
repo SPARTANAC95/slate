@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import type { Entry } from '../types';
+import { updateEntry } from '../db';
 import { isToday } from '../lib/dates';
 import { KindDot } from './KindDot';
 
@@ -15,6 +17,7 @@ const MAX_CHIPS = 3;
 
 export function DayCell({ day, iso, inMonth, entries, selected, onSelect }: Props) {
   const today = isToday(day);
+  const [dragOver, setDragOver] = useState(false);
   const shown = entries.slice(0, MAX_CHIPS);
   const overflow = entries.length - shown.length;
 
@@ -24,8 +27,25 @@ export function DayCell({ day, iso, inMonth, entries, selected, onSelect }: Prop
       onClick={() => onSelect(iso)}
       aria-label={iso}
       aria-pressed={selected}
+      onDragOver={(e) => {
+        if (e.dataTransfer.types.includes('text/slate-entry')) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          setDragOver(true);
+        }
+      }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDragOver(false);
+        const id = e.dataTransfer.getData('text/slate-entry');
+        if (id) {
+          updateEntry(id, { date: iso });
+          onSelect(iso);
+        }
+      }}
       className={`flex h-full flex-col items-stretch gap-1 overflow-hidden p-2 text-left transition-colors duration-150 ${
-        selected
+        selected || dragOver
           ? 'bg-panel-hover shadow-[inset_0_0_0_1px_rgba(255,255,255,0.13)]'
           : 'bg-bg hover:bg-panel'
       }`}

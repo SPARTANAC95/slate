@@ -20,7 +20,7 @@ const hostname = (url: string) => {
   }
 };
 
-export function EntryRow({ entry }: { entry: Entry }) {
+export function EntryRow({ entry, draggable = false }: { entry: Entry; draggable?: boolean }) {
   const [editing, setEditing] = useState(false);
 
   if (editing) {
@@ -32,7 +32,20 @@ export function EntryRow({ entry }: { entry: Entry }) {
   }
 
   return (
-    <li className="group flex items-start gap-2 rounded-lg px-1.5 py-1.5 transition-colors duration-150 hover:bg-panel-hover">
+    <li
+      draggable={draggable}
+      onDragStart={
+        draggable
+          ? (e) => {
+              e.dataTransfer.setData('text/slate-entry', entry.id);
+              e.dataTransfer.effectAllowed = 'move';
+            }
+          : undefined
+      }
+      className={`group flex items-start gap-2 rounded-lg px-1.5 py-1.5 transition-colors duration-150 hover:bg-panel-hover ${
+        draggable ? 'cursor-grab' : ''
+      }`}
+    >
       <span className="mt-[7px] flex"><KindDot kind={entry.kind} /></span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-13">{entry.title}</span>

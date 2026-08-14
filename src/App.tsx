@@ -8,6 +8,8 @@ import { fromISODate, monthName, todayISO } from './lib/dates';
 import { MonthGrid } from './components/MonthGrid';
 import { DayPanel } from './components/DayPanel';
 import { QuickAdd } from './components/QuickAdd';
+import { CountdownRail } from './components/CountdownRail';
+import { Backlog } from './components/Backlog';
 
 export default function App() {
   const now = new Date();
@@ -15,7 +17,9 @@ export default function App() {
   const [direction, setDirection] = useState<'next' | 'prev' | null>(null);
   const [selected, setSelected] = useState<string>(todayISO());
   const [refreshNote, setRefreshNote] = useState<string | null>(null);
+  const [showBacklog, setShowBacklog] = useState(false);
   const entries = useLiveEntries() ?? [];
+  const backlogCount = entries.filter((e) => e.date === null).length;
 
   const runRefresh = async () => {
     setRefreshNote('checking…');
@@ -59,7 +63,19 @@ export default function App() {
   return (
     <div className="flex h-full flex-col overflow-hidden">
       <header className="grid grid-cols-[1fr_auto_1fr] items-center px-7 pb-4 pt-5">
-        <span className="text-13 font-medium tracking-[-0.02em] text-text-3">slate</span>
+        <span className="flex items-center gap-3">
+          <span className="text-13 font-medium tracking-[-0.02em] text-text-3">slate</span>
+          <button
+            type="button"
+            onClick={() => setShowBacklog((v) => !v)}
+            aria-pressed={showBacklog}
+            className={`rounded-lg border px-2.5 py-1 text-12 transition-colors duration-150 hover:bg-panel-hover hover:text-text ${
+              showBacklog ? 'border-line-strong bg-panel-hover text-text' : 'border-line text-text-2'
+            }`}
+          >
+            backlog <span className="font-mono text-11 text-text-3">{backlogCount}</span>
+          </button>
+        </span>
         <h1 className="text-18 font-semibold tracking-[-0.02em]">
           {monthName(cursor.month)}{' '}
           <span className="font-mono text-18 font-normal text-text-2">{cursor.year}</span>
@@ -103,8 +119,10 @@ export default function App() {
       </header>
 
       <div className="flex min-h-0 flex-1 gap-5 px-7 pb-6">
+        {showBacklog && <Backlog entries={entries} />}
         <main className="flex min-w-0 flex-1 flex-col">
           <QuickAdd onAdded={jumpTo} />
+          <CountdownRail entries={entries} onJump={jumpTo} />
           <div className="min-h-0 flex-1">
             <MonthGrid
               year={cursor.year}
