@@ -1,6 +1,7 @@
 import type { Entry } from '../types';
 import { railItems } from '../lib/rail';
 import { KindDot } from './KindDot';
+import { Poster } from './Poster';
 
 type Props = {
   entries: Entry[];
@@ -34,23 +35,26 @@ export function CountdownRail({ entries, onJump }: Props) {
           type="button"
           onClick={() => onJump(date)}
           title={entry.title}
-          className={`flex min-w-0 flex-1 basis-0 flex-col items-start gap-1.5 rounded-lg border px-3.5 py-2.5 text-left transition-colors duration-150 ${
+          className={`flex min-w-0 flex-1 basis-0 items-center gap-2.5 rounded-lg border px-3 py-2.5 text-left transition-colors duration-150 ${
             days < 0
               ? 'border-line-strong bg-panel-hover hover:bg-panel'
               : 'border-line bg-transparent hover:bg-panel'
           }`}
         >
-          <span className="flex h-8 items-end">
-            <Count days={days} />
-          </span>
-          <span className="flex w-full min-w-0 items-center gap-1.5">
-            <KindDot kind={entry.kind} />
-            <span className="truncate text-12 text-text-2">{entry.title}</span>
-            {entry.series && (
-              <span className="shrink-0 font-mono text-11 text-text-3">
-                s{entry.series.season}e{entry.series.episode}
-              </span>
-            )}
+          <Poster entry={entry} size="rail" />
+          <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <span className="flex h-8 items-end">
+              <Count days={days} />
+            </span>
+            <span className="flex w-full min-w-0 items-center gap-1.5">
+              <KindDot kind={entry.kind} />
+              <span className="truncate text-12 text-text-2">{entry.title}</span>
+              {entry.series && (
+                <span className="shrink-0 font-mono text-11 text-text-3">
+                  s{entry.series.season}e{entry.series.episode}
+                </span>
+              )}
+            </span>
           </span>
         </button>
       ))}

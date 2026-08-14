@@ -28,8 +28,16 @@ export function DayNoteBox({ date }: { date: string }) {
     }
   };
 
-  // if the day changes (or the panel unmounts) mid-debounce, save what was typed
-  useEffect(() => flush, [date]);
+  // if the day changes (or the panel unmounts) mid-debounce, save what was
+  // typed — and drop it afterwards so it can't be written to the next day
+  useEffect(
+    () => () => {
+      flush();
+      pending.current = null;
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [date],
+  );
 
   const onChange = (value: string) => {
     setBody(value);

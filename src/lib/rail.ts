@@ -17,11 +17,12 @@ export type RailItem = {
 export function railItems(entries: Entry[], today: Date, limit = 6): RailItem[] {
   const floor = startOfDay(today);
   const items = entries
-    .filter((e) => !e.done && e.deletedAt === null && e.date !== null)
+    .filter((e) => !e.done && e.deletedAt === null && typeof e.date === 'string')
     .map((e) => {
       const date = e.annual ? nextAnnualOccurrence(e.date!, floor) : e.date!;
       return { entry: e, date, days: differenceInCalendarDays(fromISODate(date), floor) };
-    });
+    })
+    .filter((i) => Number.isFinite(i.days));
   const overdue = items.filter((i) => i.days < 0).sort((a, b) => a.days - b.days);
   const upcoming = items.filter((i) => i.days >= 0).sort((a, b) => a.days - b.days);
   return [...overdue, ...upcoming].slice(0, limit);

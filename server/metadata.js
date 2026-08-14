@@ -44,6 +44,8 @@ async function rawg(path, params = {}) {
 }
 
 const year = (date) => (date ? Number(date.slice(0, 4)) : null);
+// providers report 0 for 'unknown', which is not a length
+const mins = (v) => (typeof v === 'number' && v > 0 ? v : null);
 
 /** merged search across providers; kinds ⊆ {film, series, game} */
 export async function search(q, kinds) {
@@ -119,7 +121,11 @@ export async function search(q, kinds) {
   return store(cacheKey, merged.map(({ popularity: _p, ...r }) => r));
 }
 
-/** the provider's current date for one entry — episode-aware for series */
+/**
+ * The provider's current date for one entry — episode-aware for series.
+ * Also returns runtimeMin (minutes) where the provider knows it, which is
+ * what "pick something for ~30min" filters on.
+ */
 export async function currentDate({ source, kind, id, season, episode }) {
   const cacheKey = `d:${source}:${kind}:${id}:${season ?? ''}:${episode ?? ''}`;
   const hit = cached(cacheKey);
@@ -128,17 +134,45 @@ export async function currentDate({ source, kind, id, season, episode }) {
   if (source === 'rawg') {
     if (!rawgKey()) return null;
     const d = await rawg(`/games/${id}`);
-    return store(cacheKey, { date: d.released || null, title: d.name });
+    // rawg playtime is in hours
+    const runtimeMin = d.playtime ? d.playtime * 60 : null;
+    return store(cacheKey, { date: d.released || null, title: d.name, runtimeMin });
   }
   if (!tmdbKey()) return null;
   if (kind === 'series' && season && episode) {
     const d = await tmdb(`/tv/${id}/season/${season}/episode/${episode}`);
-    return store(cacheKey, { date: d.air_date || null, title: d.name });
+    return store(cacheKey, { date: d.air_date || null, title: d.name, runtimeMin: mins(d.runtime) });
   }
   if (kind === 'series') {
     const d = await tmdb(`/tv/${id}`);
-    return store(cacheKey, { date: d.first_air_date || null, title: d.name });
+    return store(cacheKey, {
+      date: d.first_air_date || null,
+      title: d.name,
+      runtimeMin: mins(d.episode_run_time?.[0]),
+    });
   }
   const d = await tmdb(`/movie/${id}`);
-  return store(cacheKey, { date: d.release_date || null, title: d.title });
+  return store(cacheKey, {
+    date: d.release_date || null,
+    title: d.title,
+    runtimeMin: mins(d.runtime),
+  });
+}
+
+/** every episode of one season — the whole-season add */
+export async function seasonEpisodes({ id, season }) {
+  const cacheKey = `se:${id}:${season}`;
+  const hit = cached(cacheKey);
+  if (hit) return hit;
+  if (!tmdbKey()) return null;
+  const d = await tmdb(`/tv/${id}/season/${season}`);
+  const episodes = (d.episodes ?? [])
+    .filter((e) => e.air_date)
+    .map((e) => ({
+      episode: e.episode_number,
+      title: e.name || `episode ${e.episode_number}`,
+      date: e.air_date,
+      runtimeMin: mins(e.runtime),
+    }));
+  return store(cacheKey, episodes);
 }

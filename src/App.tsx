@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
+import { addDays } from 'date-fns';
 import { purgeExpiredDeleted } from './db';
-import { requestPersistentStorage, startBackups } from './db/backup';
+import { requestPersistentStorage, startBackups, type BackupStatus } from './db/backup';
 import { markRefreshed, refreshExternalDates, shouldAutoRefresh } from './db/refresh';
 import { applyImport, exportToFile, planImport, type ImportPlan } from './db/transfer';
 import { useLiveEntries } from './db/hooks';
-import { fromISODate, todayISO } from './lib/dates';
+import { fromISODate, toISODate, todayISO } from './lib/dates';
 import { useShortcuts } from './lib/useShortcuts';
+import { startNotifications } from './lib/notify';
 import { Header } from './components/Header';
 import { MonthGrid } from './components/MonthGrid';
 import { DayPanel } from './components/DayPanel';
@@ -16,6 +18,7 @@ import { YearView } from './components/YearView';
 import { CommandPalette } from './components/CommandPalette';
 import { HelpSheet } from './components/HelpSheet';
 import { ImportDialog } from './components/ImportDialog';
+import { Preferences } from './components/Preferences';
 
 export default function App() {
   const now = new Date();
@@ -27,22 +30,35 @@ export default function App() {
   const [showBacklog, setShowBacklog] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
-  const [importState, setImportState] = useState<{ plan: ImportPlan; fileName: string } | null>(null);
+  const [prefsOpen, setPrefsOpen] = useState(false);
+  const [importState, setImportState] = useState<{ plan: ImportPlan; fileName: string } | null>(
+    null,
+  );
   const [note, setNote] = useState<string | null>(null);
+  const [backup, setBackup] = useState<BackupStatus>({ state: 'idle' });
   const fileRef = useRef<HTMLInputElement>(null);
-  const entries = useLiveEntries() ?? [];
+  const noteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // undefined until indexeddb opens — "loading" and "empty" are different
+  const loaded = useLiveEntries();
+  const entries = loaded ?? [];
   const backlogCount = entries.filter((e) => e.date === null).length;
 
   const flash = (text: string) => {
     setNote(text);
-    setTimeout(() => setNote(null), 5000);
+    if (noteTimer.current) clearTimeout(noteTimer.current);
+    noteTimer.current = setTimeout(() => setNote(null), 5000);
   };
 
   const runRefresh = async () => {
     setNote('checking…');
-    const { checked, moved } = await refreshExternalDates();
-    markRefreshed();
-    flash(checked === 0 ? 'nothing to refresh' : `checked ${checked} — ${moved} moved`);
+    try {
+      const { checked, moved } = await refreshExternalDates();
+      markRefreshed();
+      flash(checked === 0 ? 'nothing to refresh' : `checked ${checked} — ${moved} moved`);
+    } catch {
+      // never leave the header stuck on "checking…" — that also wedges the button
+      flash('refresh failed — dates are unchanged');
+    }
   };
 
   useEffect(() => {
@@ -52,11 +68,27 @@ export default function App() {
     // focus quick add once on open — later, `n` brings it back without
     // stealing focus from single-letter shortcuts on view switches
     document.getElementById('quick-add')?.focus();
-    return startBackups();
+    const stopBackups = startBackups(setBackup);
+    const stopNotifications = startNotifications();
+    return () => {
+      stopBackups();
+      stopNotifications();
+      if (noteTimer.current) clearTimeout(noteTimer.current);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const move = (delta: -1 | 1) => {
+  const showMonthOf = (date: string) => {
+    const d = fromISODate(date);
+    setCursor((cur) =>
+      cur.year === d.getFullYear() && cur.month === d.getMonth()
+        ? cur
+        : { year: d.getFullYear(), month: d.getMonth() },
+    );
+  };
+
+  /** whole pages: months in month view, years in year view */
+  const movePage = (delta: -1 | 1) => {
     if (view === 'year') return setYearCursor((y) => y + delta);
     setDirection(delta === 1 ? 'next' : 'prev');
     setCursor(({ year, month }) => {
@@ -65,16 +97,25 @@ export default function App() {
     });
   };
 
+  /** walk the selection by days; the grid follows across month boundaries */
+  const moveDay = (delta: number) => {
+    if (view === 'year') return setYearCursor((y) => y + (delta > 0 ? 1 : -1));
+    const next = toISODate(addDays(fromISODate(selected), delta));
+    setDirection(delta > 0 ? 'next' : 'prev');
+    setSelected(next);
+    showMonthOf(next);
+  };
+
   const jumpTo = (date: string | null) => {
     if (!date) return setShowBacklog(true);
-    const d = fromISODate(date);
     setView('month');
     setDirection(null);
-    setCursor({ year: d.getFullYear(), month: d.getMonth() });
     setSelected(date);
+    showMonthOf(date);
   };
 
   const goToday = () => jumpTo(todayISO());
+  const toggleYear = () => setView((v) => (v === 'year' ? 'month' : 'year'));
 
   const onFilePicked = async (file: File) => {
     try {
@@ -89,13 +130,15 @@ export default function App() {
   useShortcuts({
     palette: () => setPaletteOpen((v) => !v),
     quickAdd: () => document.getElementById('quick-add')?.focus(),
-    move,
+    movePage,
+    moveDay,
     today: goToday,
-    year: () => setView((v) => (v === 'year' ? 'month' : 'year')),
+    year: toggleYear,
     backlog: () => setShowBacklog((v) => !v),
     help: () => setHelpOpen((v) => !v),
     escape: () => {
       if (importState) return setImportState(null), true;
+      if (prefsOpen) return setPrefsOpen(false), true;
       if (helpOpen) return setHelpOpen(false), true;
       if (paletteOpen) return setPaletteOpen(false), true;
       if (showBacklog) return setShowBacklog(false), true;
@@ -113,11 +156,12 @@ export default function App() {
         backlogCount={backlogCount}
         note={note}
         refreshBusy={note === 'checking…'}
-        onMove={move}
+        backup={backup}
+        onMove={movePage}
         onToday={goToday}
         onRefresh={runRefresh}
         onToggleBacklog={() => setShowBacklog((v) => !v)}
-        onToggleYear={() => setView((v) => (v === 'year' ? 'month' : 'year'))}
+        onToggleYear={toggleYear}
       />
 
       <div className="flex min-h-0 flex-1 gap-5 px-7 pb-6">
@@ -127,8 +171,8 @@ export default function App() {
           <>
             {showBacklog && <Backlog entries={entries} />}
             <main className="flex min-w-0 flex-1 flex-col">
-              <QuickAdd onAdded={jumpTo} />
-              {entries.length === 0 && (
+              <QuickAdd onAdded={jumpTo} onNote={flash} />
+              {loaded !== undefined && entries.length === 0 && (
                 <p className="mb-3 px-3 text-12 text-text-3">
                   nothing scheduled yet — type a title and a date above, like{' '}
                   <span className="font-mono text-text-2">album drop oct 22</span>, and press
@@ -158,23 +202,33 @@ export default function App() {
         onClose={() => setPaletteOpen(false)}
         entries={entries}
         onJump={jumpTo}
-        onToggleYear={() => setView((v) => (v === 'year' ? 'month' : 'year'))}
+        onToggleYear={toggleYear}
         onExport={() => {
-          exportToFile();
-          flash('exported');
+          exportToFile().then(
+            () => flash('exported'),
+            () => flash('export failed — nothing was written'),
+          );
         }}
         onImport={() => fileRef.current?.click()}
         onShowHelp={() => setHelpOpen(true)}
+        onShowPreferences={() => setPrefsOpen(true)}
       />
       {helpOpen && <HelpSheet onClose={() => setHelpOpen(false)} />}
+      {prefsOpen && <Preferences onClose={() => setPrefsOpen(false)} onNote={flash} />}
       {importState && (
         <ImportDialog
           plan={importState.plan}
           fileName={importState.fileName}
           onConfirm={async () => {
-            await applyImport(importState.plan);
-            setImportState(null);
-            flash('imported');
+            try {
+              await applyImport(importState.plan);
+              flash('imported');
+            } catch {
+              flash('import failed — nothing was changed');
+            } finally {
+              // the dialog must always close, or it looks frozen
+              setImportState(null);
+            }
           }}
           onCancel={() => setImportState(null)}
         />

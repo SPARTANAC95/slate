@@ -1,5 +1,6 @@
 import Dexie, { type Table } from 'dexie';
 import type { DayNote, Entry, EntryKind } from '../types';
+import { knownRuntime } from '../lib/runtime';
 
 class SlateDB extends Dexie {
   entries!: Table<Entry, string>;
@@ -15,6 +16,12 @@ class SlateDB extends Dexie {
     this.version(2).upgrade((tx) =>
       tx.table('entries').toCollection().modify((e) => {
         if (!Array.isArray(e.links)) e.links = [];
+      }),
+    );
+    // v3: entries grew `runtimeMin`
+    this.version(3).upgrade((tx) =>
+      tx.table('entries').toCollection().modify((e) => {
+        if (e.runtimeMin === undefined) e.runtimeMin = null;
       }),
     );
   }
@@ -34,6 +41,7 @@ export type NewEntry = {
   tags?: string[];
   series?: Entry['series'];
   external?: Entry['external'];
+  runtimeMin?: number | null;
   dateSource?: 'manual' | 'api';
 };
 
@@ -53,6 +61,7 @@ export async function addEntry(input: NewEntry): Promise<Entry> {
     links: input.links ?? [],
     tags: input.tags ?? [],
     external: input.external ?? null,
+    runtimeMin: knownRuntime(input.runtimeMin),
     series: input.series ?? null,
     deletedAt: null,
     createdAt: now,
@@ -60,6 +69,34 @@ export async function addEntry(input: NewEntry): Promise<Entry> {
   };
   await db.entries.add(entry);
   return entry;
+}
+
+/** add many at once — used by the whole-season add */
+export async function addEntries(inputs: NewEntry[]): Promise<number> {
+  const now = Date.now();
+  const rows: Entry[] = inputs.map((input, i) => ({
+    id: crypto.randomUUID(),
+    title: input.title.trim(),
+    kind: input.kind,
+    date: input.date,
+    annual: input.annual ?? false,
+    dateHistory: [{ date: input.date, changedAt: now, source: input.dateSource ?? 'manual' }],
+    done: false,
+    rating: null,
+    verdict: '',
+    notes: input.notes ?? '',
+    links: input.links ?? [],
+    tags: input.tags ?? [],
+    external: input.external ?? null,
+    runtimeMin: knownRuntime(input.runtimeMin),
+    series: input.series ?? null,
+    deletedAt: null,
+    // keep insertion order stable when they sort by createdAt
+    createdAt: now + i,
+    updatedAt: now + i,
+  }));
+  await db.entries.bulkAdd(rows);
+  return rows.length;
 }
 
 /**

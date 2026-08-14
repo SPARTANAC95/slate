@@ -29,6 +29,8 @@ export type Entry = {
   tags: string[];
   /** links to external metadata if it came from an API */
   external: { source: 'tmdb' | 'rawg'; id: string; posterUrl: string | null } | null;
+  /** how long this takes: film/episode runtime or average game playtime, minutes */
+  runtimeMin: number | null;
   /** for series only */
   series: { season: number; episode: number } | null;
   /** soft delete: set when deleted, purged after 30 days */

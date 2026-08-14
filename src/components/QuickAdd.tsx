@@ -1,21 +1,23 @@
 import { useEffect, useState } from 'react';
-import { CornerDownLeft, Plus } from 'lucide-react';
-import { format } from 'date-fns';
-import { addEntry } from '../db';
+import { Plus } from 'lucide-react';
 import { parseQuickAdd } from '../lib/parse';
-import { fromISODate } from '../lib/dates';
-import { fetchCurrentDate, useMetadataSearch, type LookupResult } from '../lib/lookup';
+import { useMetadataSearch, type LookupResult } from '../lib/lookup';
+import { addFromResult, addParsed, addWholeSeason } from '../lib/quickAddActions';
 import { useRotatingExample } from '../lib/useRotatingExample';
-import { KindDot } from './KindDot';
 import { SearchDropdown } from './SearchDropdown';
+import { QuickAddPreview } from './QuickAddPreview';
 
-type Props = { onAdded: (date: string | null) => void };
+type Props = {
+  onAdded: (date: string | null) => void;
+  onNote: (text: string) => void;
+};
 
 const EXTERNAL = new Set(['film', 'series', 'game']);
 
-export function QuickAdd({ onAdded }: Props) {
+export function QuickAdd({ onAdded, onNote }: Props) {
   const [value, setValue] = useState('');
   const [highlight, setHighlight] = useState(-1);
+  const [busy, setBusy] = useState(false);
   const example = useRotatingExample();
   const parsed = value.trim() ? parseQuickAdd(value) : null;
 
@@ -33,46 +35,40 @@ export function QuickAdd({ onAdded }: Props) {
     setValue('');
     clear();
     setHighlight(-1);
+    setBusy(false);
     onAdded(date);
   };
 
-  const submit = async () => {
-    if (!parsed?.title) return;
-    await addEntry({
-      title: parsed.title,
-      kind: parsed.kind,
-      date: parsed.date,
-      annual: parsed.annual,
-      series: parsed.series,
-      tags: parsed.tags,
-    });
-    reset(parsed.date);
+  /** one guarded entry point — a second Enter must not double-add a season */
+  const run = async (job: () => Promise<string | null>) => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      reset(await job());
+    } catch {
+      setBusy(false);
+      onNote('could not add that — try again');
+    }
   };
 
-  const pick = async (r: LookupResult) => {
+  const submit = () => {
+    if (!parsed?.title) return;
+    run(() => addParsed(parsed));
+  };
+
+  const pick = (r: LookupResult) => {
     if (!parsed) return;
-    // a typed date wins; otherwise the provider's — episode-precise for sNeM
-    let date = parsed.date ?? r.date;
-    if (!parsed.date && r.kind === 'series' && parsed.series) {
-      date = await fetchCurrentDate({
-        source: r.source,
-        kind: 'series',
-        id: r.id,
-        season: parsed.series.season,
-        episode: parsed.series.episode,
-      });
-    }
-    await addEntry({
-      title: r.title,
-      kind: r.kind,
-      date,
-      annual: parsed.annual,
-      series: parsed.series,
-      tags: parsed.tags,
-      external: { source: r.source, id: r.id, posterUrl: r.posterUrl },
-      dateSource: date && !parsed.date ? 'api' : 'manual',
+    run(async () => {
+      if (r.kind === 'series' && parsed.wholeSeason !== null) {
+        const bulk = await addWholeSeason(parsed, r, parsed.wholeSeason);
+        if (bulk) {
+          onNote(`added ${bulk.count} episodes of ${r.title} season ${parsed.wholeSeason}`);
+          return bulk.date;
+        }
+        onNote('could not load that season — adding the show instead');
+      }
+      return addFromResult(parsed, r);
     });
-    reset(date);
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -105,7 +101,8 @@ export function QuickAdd({ onAdded }: Props) {
             onKeyDown={onKeyDown}
             placeholder={example.text}
             aria-label="quick add"
-            className={`h-9 min-w-0 flex-1 bg-transparent text-13 text-text outline-none ${
+            disabled={busy}
+            className={`h-9 min-w-0 flex-1 bg-transparent text-13 text-text outline-none disabled:opacity-60 ${
               example.fading ? 'ph-fade' : ''
             }`}
           />
@@ -119,41 +116,7 @@ export function QuickAdd({ onAdded }: Props) {
           />
         )}
       </div>
-      {/* fixed-height preview strip so the grid never jumps */}
-      <div className="flex h-7 items-center gap-2 px-3 pt-1">
-        {parsed && (
-          <>
-            <KindDot kind={parsed.kind} />
-            <span className="min-w-0 truncate text-12 text-text-2">
-              {parsed.title || <span className="text-text-3">title missing</span>}
-            </span>
-            {parsed.series && (
-              <span className="shrink-0 font-mono text-11 text-text-3">
-                s{parsed.series.season}e{parsed.series.episode}
-              </span>
-            )}
-            {parsed.annual && <span className="shrink-0 text-11 text-text-3">every year</span>}
-            {parsed.tags.map((t) => (
-              <span key={t} className="shrink-0 text-11 text-text-3">
-                #{t}
-              </span>
-            ))}
-            <span className="ml-auto shrink-0 font-mono text-12 text-text-2">
-              {parsed.date ? (
-                format(fromISODate(parsed.date), 'EEE dd.MM.yyyy').toLowerCase()
-              ) : (
-                <span className="text-text-3">no date — goes to backlog</span>
-              )}
-            </span>
-            {parsed.title && (
-              <span className="flex shrink-0 items-center gap-1 text-11 text-text-3">
-                <CornerDownLeft size={11} />
-                add
-              </span>
-            )}
-          </>
-        )}
-      </div>
+      <QuickAddPreview parsed={parsed} />
     </div>
   );
 }

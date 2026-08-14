@@ -20,6 +20,7 @@ const entry = (patch: Partial<Entry>): Entry => ({
   links: [],
   tags: [],
   external: null,
+  runtimeMin: null,
   series: null,
   deletedAt: null,
   createdAt: 0,

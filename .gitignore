@@ -3,3 +3,5 @@ dist/
 .env
 *.local
 data/
+src-tauri/target/
+src-tauri/gen/

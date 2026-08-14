@@ -1,5 +1,7 @@
 import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { monthName } from '../lib/dates';
+import type { BackupStatus } from '../db/backup';
+import { BackupIndicator } from './BackupIndicator';
 
 type Props = {
   view: 'month' | 'year';
@@ -9,6 +11,7 @@ type Props = {
   backlogCount: number;
   note: string | null;
   refreshBusy: boolean;
+  backup: BackupStatus;
   onMove: (delta: -1 | 1) => void;
   onToday: () => void;
   onRefresh: () => void;
@@ -50,6 +53,7 @@ export function Header(p: Props) {
 
       <div className="flex items-center justify-end gap-1">
         {p.note && <span className="mr-2 text-11 text-text-3">{p.note}</span>}
+        <BackupIndicator status={p.backup} />
         <button
           type="button"
           onClick={p.onRefresh}

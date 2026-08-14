@@ -2,12 +2,27 @@
 
 Single-user personal calendar: what's coming (game / film / series releases, events), and what I thought of it after. Local-only — data lives in the browser (IndexedDB), exportable to JSON.
 
-## Setup
+slate runs two ways from one codebase:
+
+- **Windows app** (recommended) — its own window, taskbar icon, tray, and toast reminders. No terminal, no browser.
+- **Browser + dev server** — for development.
+
+## Setup — Windows app
 
 ```
 npm install
-copy .env.example .env    # TMDB / RAWG keys, only needed from M3 on
-npm run dev               # starts vite (:5173) and the API proxy (:8787)
+npm run dev:app      # run it
+npm run build:app    # produce an installer in src-tauri/target/release/bundle/nsis/
+```
+
+Needs Rust (`rustup`) and the MSVC build tools. API keys go in the app itself: `ctrl k` → `preferences`.
+
+## Setup — browser
+
+```
+npm install
+copy .env.example .env    # TMDB / RAWG keys
+npm run dev               # vite (:5173) + API proxy (:8787)
 ```
 
 Target: Chrome on desktop, ≥900px wide.
@@ -22,9 +37,13 @@ Target: Chrome on desktop, ≥900px wide.
 - **M5 — the log: done.** Entries whose date has passed get a `Mark done` action in the row; done reveals five rating squares (click again to clear) and a one-line verdict that saves on blur or Enter. The `year` toggle shows twelve columns of day squares, intensity by how much was logged that day, monochrome; hover shows the day's titles, click jumps to the day. Squares scale up on 2K/4K screens.
 - **M6 — command palette, data, polish: done.** `ctrl k` opens the palette: search titles, type a date to jump (`19.11.`, `friday`, `sutra` all work), create entries, toggle year view, export, import, restore deleted (30-day window). Keyboard shortcuts throughout, with a `?` sheet. Export downloads one JSON file; import shows a diff summary (`+N new · M updated · K unchanged`, newest `updatedAt` wins) before committing. Thin dark scrollbars for Windows Chrome.
 
+## Reminders
+
+The desktop app nudges you once a day about whatever is scheduled, as a Windows toast. Closing the window leaves slate in the tray so the reminder still arrives; quit properly from the tray menu. Turn reminders off, or enable start-with-Windows, in `ctrl k` → `preferences`.
+
 ## API keys
 
-Both are free. Put them in `.env` (copy `.env.example`), then restart `npm run dev`:
+Both are free. In the desktop app they live in `ctrl k` → `preferences`. In the browser they go in `.env` (copy `.env.example`), then restart `npm run dev`:
 
 - `TMDB_API_KEY` — create an account at themoviedb.org → Settings → API. Either the classic v3 key or the "API Read Access Token" works.
 - `RAWG_API_KEY` — register at rawg.io/apidocs. Free tier: 20,000 requests/month (the proxy caches for an hour to stay well under).
@@ -40,7 +59,9 @@ This product uses the TMDB API but is not endorsed or certified by TMDB. Game da
 | `ctrl k` | command palette |
 | `n` | focus quick add |
 | `/` | search (palette) |
-| `←` `→` | previous / next month (year in year view) |
+| `←` `→` | previous / next day |
+| `↑` `↓` | previous / next week |
+| `shift` `←` `→` | previous / next month (year in year view) |
 | `t` | today |
 | `y` | year view |
 | `b` | backlog |
@@ -54,5 +75,16 @@ One JSON file: `{ version: 1, exportedAt, entries: Entry[], dayNotes: DayNote[] 
 ## Tests
 
 ```
-npm test    # parser (from M2) and date math
+npm test    # 78 tests: parser, date math, rail order, search, runtime, import normalization
 ```
+
+## Beyond the original six milestones
+
+- **Poster art** on entry rows and countdown cards, from whichever provider matched.
+- **Tags** render on entries and are searchable in the palette (`#hype`, or `#scifi dune` to narrow by both).
+- **Whole-season add** — type `Silo s3` (no episode), pick the show, and every dated episode of that season is added at once with its own air date and runtime.
+- **Real runtimes** — `Pick for me` filters by actual TMDB runtime / RAWG playtime instead of guessing from kind, and rows show the length.
+- **Full keyboard reach** — arrows walk days and weeks across month boundaries, shift+arrows jump months.
+- **Year view shows scheduled entries too**, dimmer than logged ones, so an unlogged year is not an empty grid.
+- **Backup status** in the header — if the disk mirror is not running, it says so instead of failing silently.
+- **Error boundary** — a render crash offers an export rather than a white screen.

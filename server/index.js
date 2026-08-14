@@ -24,10 +24,17 @@ app.post('/api/backup', (req, res) => {
     const next = JSON.stringify(req.body, null, 2);
 
     if (fs.existsSync(dest)) {
-      const prev = fs.readFileSync(dest, 'utf8');
-      const changed =
-        JSON.stringify({ ...JSON.parse(prev), exportedAt: 0 }) !==
-        JSON.stringify({ ...req.body, exportedAt: 0 });
+      // a corrupt previous file must not block the write — it only feeds
+      // the "did anything change" check
+      let changed = true;
+      try {
+        const prev = fs.readFileSync(dest, 'utf8');
+        changed =
+          JSON.stringify({ ...JSON.parse(prev), exportedAt: 0 }) !==
+          JSON.stringify({ ...req.body, exportedAt: 0 });
+      } catch {
+        changed = true;
+      }
       if (changed) {
         const histDir = path.join(dataDir, 'history');
         fs.mkdirSync(histDir, { recursive: true });
@@ -50,7 +57,7 @@ app.post('/api/backup', (req, res) => {
 });
 
 // metadata lookups — a dead provider degrades to empty results, never errors
-import { search, currentDate } from './metadata.js';
+import { search, currentDate, seasonEpisodes } from './metadata.js';
 
 app.get('/api/search', async (req, res) => {
   const q = String(req.query.q ?? '').trim();
@@ -62,6 +69,18 @@ app.get('/api/search', async (req, res) => {
     res.json({ results: await search(q, kinds) });
   } catch {
     res.json({ results: [] });
+  }
+});
+
+app.get('/api/season', async (req, res) => {
+  const { id, season } = req.query;
+  if (!id || !season) return res.status(400).json({ ok: false });
+  try {
+    const episodes = await seasonEpisodes({ id: String(id), season: Number(season) });
+    if (!episodes) return res.status(503).json({ ok: false });
+    res.json({ ok: true, episodes });
+  } catch {
+    res.status(502).json({ ok: false });
   }
 });
 

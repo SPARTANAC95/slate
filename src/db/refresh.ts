@@ -1,5 +1,5 @@
 import { db, updateEntry } from './index';
-import { fetchCurrentDate } from '../lib/lookup';
+import { fetchDetails } from '../lib/lookup';
 import { todayISO } from '../lib/dates';
 
 /**
@@ -13,17 +13,21 @@ export async function refreshExternalDates(): Promise<{ checked: number; moved: 
     .toArray();
   let moved = 0;
   for (const e of entries) {
-    const date = await fetchCurrentDate({
+    const details = await fetchDetails({
       source: e.external!.source,
       kind: e.kind,
       id: e.external!.id,
       season: e.series?.season,
       episode: e.series?.episode,
     });
-    if (date !== null && date !== e.date) {
-      await updateEntry(e.id, { date }, 'api');
-      moved++;
-    }
+    if (!details) continue;
+    const patch: { date?: string; runtimeMin?: number } = {};
+    if (details.date !== null && details.date !== e.date) patch.date = details.date;
+    // backfill runtime for entries added before we started storing it
+    if (e.runtimeMin === null && details.runtimeMin !== null) patch.runtimeMin = details.runtimeMin;
+    if (Object.keys(patch).length === 0) continue;
+    await updateEntry(e.id, patch, 'api');
+    if (patch.date) moved++;
   }
   return { checked: entries.length, moved };
 }

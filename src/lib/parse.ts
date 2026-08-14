@@ -10,6 +10,8 @@ export type ParsedEntry = {
   date: string | null;
   annual: boolean;
   series: { season: number; episode: number } | null;
+  /** `s3` with no episode — add the whole season at once */
+  wholeSeason: number | null;
   tags: string[];
 };
 
@@ -33,9 +35,25 @@ const WEEKDAYS: [RegExp, Day][] = [
   [/\b(?:sunday|nedjelja|nedelja)\b/, 0],
 ];
 
-/** lowercase + strip bs diacritics; every mapping is 1:1 so indexes are stable */
-const normalize = (s: string) =>
-  s.toLowerCase().replace(/[čć]/g, 'c').replace(/ž/g, 'z').replace(/š/g, 's').replace(/đ/g, 'd');
+const DIACRITICS: Record<string, string> = {
+  č: 'c', ć: 'c', ž: 'z', š: 's', đ: 'd',
+  Č: 'c', Ć: 'c', Ž: 'z', Š: 's', Đ: 'd',
+};
+
+/**
+ * Lowercase + strip bs diacritics, one UTF-16 unit at a time so the result
+ * lines up with the input index for index. Plain `toLowerCase()` is not
+ * length-preserving (İ becomes two units), which would shift every cut
+ * taken after it and mangle the title.
+ */
+const normalize = (s: string): string => {
+  let out = '';
+  for (const ch of Array.from({ length: s.length }, (_, i) => s[i])) {
+    const mapped = DIACRITICS[ch] ?? ch.toLowerCase();
+    out += mapped.length === 1 ? mapped : ch;
+  }
+  return out;
+};
 
 export function parseQuickAdd(input: string, now: Date = new Date()): ParsedEntry {
   let norm = normalize(input);
@@ -64,6 +82,12 @@ export function parseQuickAdd(input: string, now: Date = new Date()): ParsedEntr
 
   const s = take(/\bs(\d{1,2})\s?e(\d{1,3})\b/);
   const series = s ? { season: Number(s[1]), episode: Number(s[2]) } : null;
+  // a bare `s3` means the whole season, but only after the title — a leading
+  // token like "S3 bucket policy" is a name, not a season
+  const bareMatch = series ? null : /\bs(\d{1,2})\b/.exec(norm);
+  const bare = bareMatch && bareMatch.index > 0 ? bareMatch : null;
+  if (bare) cut(bare.index, bare[0].length);
+  const wholeSeason = bare ? Number(bare[1]) : null;
 
   const annual = take(/\b(?:every year|svake godine)\b/) !== null;
 
@@ -141,17 +165,19 @@ export function parseQuickAdd(input: string, now: Date = new Date()): ParsedEntr
     if (date) break;
   }
 
-  // title = whatever wasn't consumed, tidied up
-  const title = [...input]
+  // title = whatever wasn't consumed, tidied up. indexed by utf-16 unit to
+  // match the cut ranges, which come from regex offsets on `norm`
+  const title = Array.from({ length: input.length }, (_, i) => input[i])
     .filter((_, i) => !cuts.some(([a, b]) => i >= a && i < b))
     .join('')
     .replace(/\s+/g, ' ')
     .replace(/^[\s\-–—,;:.]+|[\s\-–—,;:]+$/g, '')
     .trim();
 
+  const isSeries = series !== null || wholeSeason !== null;
   const resolvedKind: EntryKind =
-    kind ?? (series ? 'series' : annual ? 'event' : impliesTask ? 'task' : 'note');
-  const kindSource = kind ? 'tag' : series || annual || impliesTask ? 'pattern' : 'default';
+    kind ?? (isSeries ? 'series' : annual ? 'event' : impliesTask ? 'task' : 'note');
+  const kindSource = kind ? 'tag' : isSeries || annual || impliesTask ? 'pattern' : 'default';
 
-  return { title, kind: resolvedKind, kindSource, date, annual, series, tags };
+  return { title, kind: resolvedKind, kindSource, date, annual, series, wholeSeason, tags };
 }

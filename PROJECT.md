@@ -12,6 +12,8 @@ Single-user personal calendar for tracking upcoming releases (games, films, seri
 
 ## Structure
 
+- `src-tauri/` — the Windows app. Rust mirrors the node proxy (`metadata.rs`) so the packaged build needs no server; `lib.rs` also owns the disk backup, tray, and API-key storage. `src/lib/platform.ts` is the single seam that picks `invoke()` or `fetch('/api/…')`.
+
 - `src/types.ts` — data model (`Entry`, `DayNote`); everything derives from it.
 - `src/db/` — the only module that touches Dexie/IndexedDB; enforces dateHistory append-on-change and 30-day soft delete.
 - `src/lib/dates.ts` — date math (Monday-first month grid, annual recurrence); unit-tested.
@@ -36,9 +38,17 @@ Single-user personal calendar for tracking upcoming releases (games, films, seri
 - Windows is the target platform (user, 2026-08-14): `ctrl k` chords, Windows-styled thin scrollbars, keys shown as `ctrl` in the help sheet. Example copy kept professional/media-focused per user note.
 - "Always-focused quick add" (M2 spec) conflicts with single-letter shortcuts (M6): shortcuts won. The input is focused once on open and via `n`; autoFocus on remount would swallow arrows/letters after a view switch.
 
+## Decisions (later)
+
+- Tauri over Electron: Rust + MSVC + WebView2 were already on this machine, and it produces a small native app. The node proxy stays for browser development only.
+- Closing the window hides to tray rather than quitting — a reminder cannot fire from a process that exited. Quit lives in the tray menu.
+- API keys live in the app config dir (`get_api_keys`/`set_api_keys`), edited via `ctrl k` → preferences. The "no settings page" rule is honoured by reaching it only through the palette.
+- Import merges `dateHistory` (union by `changedAt`) rather than replacing it — the spec's "newest wins" must not destroy a delay trail that only the local copy recorded.
+- Providers report `runtime: 0` for "unknown"; that is normalized to `null` at the DB write boundary, not at call sites.
+
 ## Next actions
 
-- All six milestones delivered. Remaining for the user: create TMDB + RAWG keys → `.env` (README) — until then lookup silently returns nothing.
-- Possible follow-up if asked: package as a real Windows desktop app (Tauri would fit — small, no Chrome dependency) and/or a `start-slate.cmd` launcher.
+- User must create TMDB + RAWG keys and enter them in the app (`ctrl k` → preferences). Until then lookup silently returns nothing; the flow is verified with mocked providers only.
+- Field-test the packaged app: install, confirm the tray/autostart behaviour and that a real Windows toast fires for an entry due today.
 
 

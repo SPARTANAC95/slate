@@ -116,6 +116,26 @@ describe('date formats', () => {
   });
 });
 
+describe('non-ascii titles keep their characters', () => {
+  it('an emoji before the date does not shift the cut', () => {
+    const r = p('🎉 party friday');
+    expect(r.date).toBe('2026-08-21');
+    expect(r.title).toBe('🎉 party');
+  });
+
+  it('a turkish dotted I survives lowercasing', () => {
+    const r = p('İstanbul trip friday');
+    expect(r.date).toBe('2026-08-21');
+    expect(r.title).toBe('İstanbul trip');
+  });
+
+  it('bosnian diacritics still match and still render', () => {
+    const r = p('Šumska šetnja četvrtak');
+    expect(r.date).toBe('2026-08-20');
+    expect(r.title).toBe('Šumska šetnja');
+  });
+});
+
 describe('kind and tags', () => {
   it('#game tag wins over everything', () => {
     const r = p('#game Silksong s1e1 sutra');
@@ -136,5 +156,40 @@ describe('kind and tags', () => {
 
   it('sNeM works with capitals and spacing', () => {
     expect(p('Severance S2 E10 friday').series).toEqual({ season: 2, episode: 10 });
+  });
+});
+
+describe('whole-season shorthand', () => {
+  it('a bare sN means the whole season and implies series', () => {
+    const r = p('Silo s3');
+    expect(r).toMatchObject({ title: 'Silo', kind: 'series', wholeSeason: 3, series: null });
+  });
+
+  it('sNeM still wins and leaves wholeSeason unset', () => {
+    const r = p('Silo s3e4');
+    expect(r.series).toEqual({ season: 3, episode: 4 });
+    expect(r.wholeSeason).toBeNull();
+  });
+
+  it('does not eat a season-like fragment inside a word', () => {
+    expect(p('S1mple highlights').wholeSeason).toBeNull();
+    expect(p('S1mple highlights').title).toBe('S1mple highlights');
+  });
+
+  it('a leading sN token is a name, not a season', () => {
+    const r = p('S3 bucket policy');
+    expect(r.wholeSeason).toBeNull();
+    expect(r.title).toBe('S3 bucket policy');
+    expect(r.kind).toBe('note');
+  });
+
+  it('leaves ordinary numbers in titles alone', () => {
+    expect(p('Mass Effect 3').wholeSeason).toBeNull();
+    expect(p('Mass Effect 3').title).toBe('Mass Effect 3');
+  });
+
+  it('combines with a date', () => {
+    const r = p('Silo s3 sutra');
+    expect(r).toMatchObject({ title: 'Silo', wholeSeason: 3, date: '2026-08-15' });
   });
 });

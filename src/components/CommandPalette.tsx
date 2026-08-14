@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Command } from 'cmdk';
-import { format } from 'date-fns';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { Entry } from '../types';
 import { addEntry, db, restoreEntry } from '../db';
 import { parseQuickAdd } from '../lib/parse';
-import { fromISODate } from '../lib/dates';
-import { KindDot } from './KindDot';
+import { matchEntries } from '../lib/search';
+import { CreateItem, EntryItems, ITEM_CLASS, JumpItem, RestoreItems } from './PaletteItems';
 
 type Props = {
   open: boolean;
@@ -17,14 +16,12 @@ type Props = {
   onExport: () => void;
   onImport: () => void;
   onShowHelp: () => void;
+  onShowPreferences: () => void;
 };
-
-const itemClass =
-  'flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-13 ' +
-  'data-[selected=true]:bg-panel-hover';
 
 export function CommandPalette(props: Props) {
   const { open, onClose, entries, onJump, onToggleYear, onExport, onImport, onShowHelp } = props;
+  const { onShowPreferences } = props;
   const [value, setValue] = useState('');
   const [page, setPage] = useState<'root' | 'restore'>('root');
   const deleted =
@@ -39,13 +36,12 @@ export function CommandPalette(props: Props) {
 
   if (!open) return null;
 
-  const q = value.trim().toLowerCase();
+  const q = value.trim();
   const parsed = q ? parseQuickAdd(value) : null;
-  const matches = entries
-    .filter((e) => q !== '' && e.title.toLowerCase().includes(q))
-    .slice(0, 8);
+  const matches = matchEntries(entries, q);
   const commands = [
     { label: 'toggle year view', run: onToggleYear },
+    { label: 'preferences — api keys, reminders', run: onShowPreferences },
     { label: 'keyboard shortcuts', run: onShowHelp },
     { label: 'export data', run: onExport },
     { label: 'import data', run: onImport },
@@ -57,8 +53,7 @@ export function CommandPalette(props: Props) {
       },
       stay: true,
     },
-  ].filter((c) => q === '' || c.label.includes(q));
-  const pretty = (iso: string) => format(fromISODate(iso), 'EEE dd.MM.yyyy').toLowerCase();
+  ].filter((c) => q === '' || c.label.includes(q.toLowerCase()));
 
   const finish = (fn: () => void, stay = false) => {
     fn();
@@ -85,7 +80,9 @@ export function CommandPalette(props: Props) {
             value={value}
             onValueChange={setValue}
             placeholder={
-              page === 'root' ? 'search titles, type a date, or run a command…' : 'restore which entry?'
+              page === 'root'
+                ? 'search titles and #tags, type a date, or run a command…'
+                : 'restore which entry?'
             }
             className="h-11 w-full border-b border-line bg-transparent px-4 text-13 text-text outline-none"
           />
@@ -94,88 +91,46 @@ export function CommandPalette(props: Props) {
               nothing matches
             </Command.Empty>
 
-            {page === 'root' && parsed?.date && (
-              <Command.Item className={itemClass} onSelect={() => finish(() => onJump(parsed.date))}>
-                jump to <span className="font-mono text-12 text-text-2">{pretty(parsed.date)}</span>
-              </Command.Item>
-            )}
-            {page === 'root' && matches.length > 0 && (
-              <Command.Group
-                heading="entries"
-                className="[&_[cmdk-group-heading]]:section-label [&_[cmdk-group-heading]]:px-2.5 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:pt-2"
-              >
-                {matches.map((e) => (
+            {page === 'root' ? (
+              <>
+                {parsed?.date && (
+                  <JumpItem date={parsed.date} onSelect={() => finish(() => onJump(parsed.date))} />
+                )}
+                <EntryItems entries={matches} onSelect={(e) => finish(() => onJump(e.date))} />
+                {commands.map((c) => (
                   <Command.Item
-                    key={e.id}
-                    className={itemClass}
-                    onSelect={() => finish(() => onJump(e.date))}
+                    key={c.label}
+                    className={ITEM_CLASS}
+                    onSelect={() => finish(c.run, c.stay)}
                   >
-                    <KindDot kind={e.kind} />
-                    <span className="min-w-0 flex-1 truncate">{e.title}</span>
-                    <span className="font-mono text-11 text-text-3">
-                      {e.date ? pretty(e.date) : 'backlog'}
-                    </span>
+                    {c.label}
                   </Command.Item>
                 ))}
-              </Command.Group>
+                {parsed?.title && (
+                  <CreateItem
+                    parsed={parsed}
+                    onSelect={() =>
+                      finish(async () => {
+                        await addEntry({
+                          title: parsed.title,
+                          kind: parsed.kind,
+                          date: parsed.date,
+                          annual: parsed.annual,
+                          series: parsed.series,
+                          tags: parsed.tags,
+                        });
+                        onJump(parsed.date);
+                      })
+                    }
+                  />
+                )}
+              </>
+            ) : (
+              <RestoreItems
+                deleted={q === '' ? deleted : matchEntries(deleted, q)}
+                onSelect={(e) => finish(() => restoreEntry(e.id))}
+              />
             )}
-
-            {page === 'root' &&
-              commands.map((c) => (
-                <Command.Item
-                  key={c.label}
-                  className={itemClass}
-                  onSelect={() => finish(c.run, c.stay)}
-                >
-                  {c.label}
-                </Command.Item>
-              ))}
-
-            {page === 'root' && parsed?.title && (
-              <Command.Item
-                className={itemClass}
-                onSelect={() =>
-                  finish(async () => {
-                    await addEntry({
-                      title: parsed.title,
-                      kind: parsed.kind,
-                      date: parsed.date,
-                      annual: parsed.annual,
-                      series: parsed.series,
-                      tags: parsed.tags,
-                    });
-                    onJump(parsed.date);
-                  })
-                }
-              >
-                <KindDot kind={parsed.kind} />
-                create “{parsed.title}”
-                <span className="ml-auto font-mono text-11 text-text-3">
-                  {parsed.date ? pretty(parsed.date) : 'backlog'}
-                </span>
-              </Command.Item>
-            )}
-
-            {page === 'restore' &&
-              (deleted.length === 0 ? (
-                <p className="px-3 py-6 text-center text-12 text-text-3">
-                  nothing deleted in the last 30 days
-                </p>
-              ) : (
-                deleted
-                  .filter((e) => q === '' || e.title.toLowerCase().includes(q))
-                  .map((e) => (
-                    <Command.Item
-                      key={e.id}
-                      className={itemClass}
-                      onSelect={() => finish(() => restoreEntry(e.id))}
-                    >
-                      <KindDot kind={e.kind} />
-                      <span className="min-w-0 flex-1 truncate">{e.title}</span>
-                      <span className="text-11 text-text-3">restore</span>
-                    </Command.Item>
-                  ))
-              ))}
           </Command.List>
         </Command>
       </div>

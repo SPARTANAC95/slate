@@ -34,7 +34,10 @@ export function DayCell({ day, iso, inMonth, entries, selected, onSelect }: Prop
           setDragOver(true);
         }
       }}
-      onDragLeave={() => setDragOver(false)}
+      onDragLeave={(e) => {
+        // dragleave bubbles from child chips; ignore moves within this cell
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragOver(false);
+      }}
       onDrop={(e) => {
         e.preventDefault();
         setDragOver(false);

@@ -16,14 +16,18 @@ export function useRotatingExample(intervalMs = 4000): { text: string; fading: b
   const [fading, setFading] = useState(false);
 
   useEffect(() => {
+    let swap: ReturnType<typeof setTimeout> | null = null;
     const tick = setInterval(() => {
       setFading(true);
-      setTimeout(() => {
+      swap = setTimeout(() => {
         setIndex((i) => (i + 1) % EXAMPLES.length);
         setFading(false);
       }, 160);
     }, intervalMs);
-    return () => clearInterval(tick);
+    return () => {
+      clearInterval(tick);
+      if (swap) clearTimeout(swap);
+    };
   }, [intervalMs]);
 
   return { text: EXAMPLES[index], fading };
