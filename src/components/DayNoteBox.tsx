@@ -44,8 +44,7 @@ export function DayNoteBox({ date }: { date: string }) {
       onChange={(e) => onChange(e.target.value)}
       onBlur={flush}
       placeholder="how was this day…"
-      rows={5}
-      className="w-full resize-y rounded-lg border border-line bg-transparent p-2.5 text-13 leading-relaxed text-text transition-colors duration-150 focus:border-line-strong focus:outline-none"
+      className="min-h-[120px] w-full flex-1 resize-none rounded-lg border border-line bg-transparent p-2.5 text-13 leading-relaxed text-text transition-colors duration-150 focus:border-line-strong focus:outline-none"
     />
   );
 }

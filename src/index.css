@@ -33,6 +33,43 @@ html {
   color-scheme: dark;
 }
 
+:root {
+  --size-panel: 350px;
+}
+
+/* the app is used on screens up to 4k — step the scale up so type and
+   spacing stay proportionate while hairlines stay 1px-crisp */
+@media (min-width: 2000px) {
+  :root {
+    --text-11: 12px;
+    --text-12: 13px;
+    --text-13: 15px;
+    --text-14: 16px;
+    --text-18: 21px;
+    --text-32: 38px;
+    --spacing: 0.3rem;
+    --size-panel: 430px;
+  }
+}
+@media (min-width: 3000px) {
+  :root {
+    --text-11: 14px;
+    --text-12: 15px;
+    --text-13: 17px;
+    --text-14: 19px;
+    --text-18: 24px;
+    --text-32: 44px;
+    --spacing: 0.35rem;
+    --size-panel: 520px;
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
   /* single near-invisible radial lift at the top — the only gradient in the app */
   background:

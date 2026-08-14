@@ -19,44 +19,46 @@ export function DayPanel({ date, entries }: Props) {
   const isToday = date === todayISO();
 
   return (
-    <aside className="panel-lit flex w-[320px] shrink-0 flex-col self-start rounded-xl border border-line bg-panel p-4">
-      <header className="flex items-baseline justify-between">
-        <h2 className="text-14 font-medium tracking-[-0.02em]">
-          {isToday ? 'today' : weekday}
-        </h2>
-        <span className="font-mono text-12 text-text-2">{dateLabel}</span>
-      </header>
+    <aside className="panel-lit flex h-full w-[var(--size-panel)] shrink-0 flex-col rounded-xl border border-line bg-panel p-4">
+      <div key={date} className="fade-in flex min-h-0 flex-1 flex-col">
+        <header className="flex items-baseline justify-between">
+          <h2 className="text-14 font-medium tracking-[-0.02em]">
+            {isToday ? 'today' : weekday}
+          </h2>
+          <span className="font-mono text-12 text-text-2">{dateLabel}</span>
+        </header>
 
-      <div className="mt-4">
-        <div className="section-label mb-2">entries</div>
-        {dayEntries.length === 0 && !adding && (
-          <p className="py-1 text-12 text-text-3">nothing planned</p>
-        )}
-        <ul className="flex flex-col">
-          {dayEntries.map((e) => (
-            <EntryRow key={e.id} entry={e} />
-          ))}
-        </ul>
+        <div className="-mx-1.5 mt-4 min-h-0 overflow-y-auto px-1.5">
+          <div className="section-label mb-2">entries</div>
+          {dayEntries.length === 0 && !adding && (
+            <p className="py-1 text-12 text-text-3">nothing planned</p>
+          )}
+          <ul className="flex flex-col">
+            {dayEntries.map((e) => (
+              <EntryRow key={e.id} entry={e} />
+            ))}
+          </ul>
 
-        {adding ? (
-          <div className="mt-2">
-            <EntryEditor date={date} onDone={() => setAdding(false)} />
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setAdding(true)}
-            className="mt-1 flex items-center gap-1.5 rounded-lg px-1.5 py-1 text-12 text-text-3 transition-colors duration-150 hover:bg-panel-hover hover:text-text-2"
-          >
-            <Plus size={13} />
-            add entry
-          </button>
-        )}
-      </div>
+          {adding ? (
+            <div className="mt-2">
+              <EntryEditor date={date} onDone={() => setAdding(false)} />
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setAdding(true)}
+              className="mt-1 flex items-center gap-1.5 rounded-lg px-1.5 py-1 text-12 text-text-3 transition-colors duration-150 hover:bg-panel-hover hover:text-text-2"
+            >
+              <Plus size={13} />
+              add entry
+            </button>
+          )}
+        </div>
 
-      <div className="mt-5 border-t border-line pt-4">
-        <div className="section-label mb-2">day note</div>
-        <DayNoteBox date={date} />
+        <div className="mt-5 flex min-h-[160px] flex-1 flex-col border-t border-line pt-4">
+          <div className="section-label mb-2">day note</div>
+          <DayNoteBox date={date} />
+        </div>
       </div>
     </aside>
   );

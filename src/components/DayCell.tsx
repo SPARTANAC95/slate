@@ -24,8 +24,10 @@ export function DayCell({ day, iso, inMonth, entries, selected, onSelect }: Prop
       onClick={() => onSelect(iso)}
       aria-label={iso}
       aria-pressed={selected}
-      className={`flex min-h-[104px] flex-col items-stretch gap-1 p-2 text-left transition-colors duration-150 ${
-        selected ? 'bg-panel-hover' : 'bg-bg hover:bg-panel'
+      className={`flex h-full flex-col items-stretch gap-1 overflow-hidden p-2 text-left transition-colors duration-150 ${
+        selected
+          ? 'bg-panel-hover shadow-[inset_0_0_0_1px_rgba(255,255,255,0.13)]'
+          : 'bg-bg hover:bg-panel'
       }`}
     >
       <span
