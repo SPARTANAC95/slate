@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Slate",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "identifier": "com.slate.app",
   "build": {
     "frontendDist": "../dist",
@@ -30,6 +30,7 @@
   },
   "bundle": {
     "active": true,
+    "createUpdaterArtifacts": true,
     "targets": ["nsis"],
     "icon": [
       "icons/32x32.png",
@@ -42,6 +43,13 @@
       "nsis": {
         "installMode": "currentUser"
       }
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEFEOTA3MEUzOEY5RUFBMDgKUldRSXFwNlA0M0NRclQxYjdQM3Y4T25oQTEvMTdXSnlVQUlrbElyWDBZQWZZOE5Iakk3OHA5WGIK",
+      "endpoints": ["https://github.com/SPARTANAC95/slate/releases/latest/download/latest.json"],
+      "windows": { "installMode": "passive" }
     }
   }
 }

@@ -18,3 +18,5 @@ Thumbs.db
 client_secret*.json
 credentials*.json
 google-account.bin
+*.key
+*.password.dpapi

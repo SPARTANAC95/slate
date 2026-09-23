@@ -28,8 +28,17 @@ import { HelpSheet } from './components/HelpSheet';
 import { ImportDialog } from './components/ImportDialog';
 import { Preferences } from './components/Preferences';
 import { startGoogleSync } from './db/googleSync';
+import { startUpdateChecks, useUpdates } from './lib/updates';
+import { updateBusy } from './lib/updateController';
+import { UpdateNotice, UpdateProgress } from './components/UpdatesPanel';
 
 export default function App() {
+  const updateState = useUpdates();
+  const updating = updateBusy(updateState.phase);
+  const appRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (appRef.current) appRef.current.inert = updating;
+  }, [updating]);
   const now = new Date();
   const [cursor, setCursor] = useState({ year: now.getFullYear(), month: now.getMonth() });
   const [direction, setDirection] = useState<'next' | 'prev' | null>(null);
@@ -106,10 +115,12 @@ export default function App() {
     const stopBackups = startBackups(setBackup);
     const stopNotifications = startNotifications();
     const stopGoogleSync = startGoogleSync();
+    const stopUpdates = startUpdateChecks();
     return () => {
       stopBackups();
       stopNotifications();
       stopGoogleSync();
+      stopUpdates();
       if (noteTimer.current) clearTimeout(noteTimer.current);
     };
   }, []);
@@ -205,8 +216,9 @@ export default function App() {
     upcoming: toggleUpcoming,
     backlog: () => setShowBacklog((v) => !v),
     help: () => setHelpOpen((v) => !v),
-    blocked: () => helpOpen || prefsOpen || importState !== null,
+    blocked: () => updating || helpOpen || prefsOpen || importState !== null,
     escape: () => {
+      if (updating) return true;
       if (importState) return setImportState(null), true;
       if (prefsOpen) return setPrefsOpen(false), true;
       if (helpOpen) return setHelpOpen(false), true;
@@ -217,7 +229,8 @@ export default function App() {
   });
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <>
+    <div ref={appRef} className="flex h-full flex-col overflow-hidden">
       <Header
         onPreferences={() => setPrefsOpen(true)}
         view={view}
@@ -236,6 +249,7 @@ export default function App() {
         onToggleUpcoming={toggleUpcoming}
       />
 
+      <UpdateNotice onDetails={() => setPrefsOpen(true)} />
       <div className="flex min-h-0 flex-1 gap-5 px-7 pb-6">
         {view === 'upcoming' ? (
           <UpcomingView entries={entries} onJumpToDay={jumpTo} />
@@ -321,5 +335,7 @@ export default function App() {
         }}
       />
     </div>
+    <UpdateProgress />
+    </>
   );
 }

@@ -8,7 +8,7 @@ export function DoneControls({ entry }: { entry: Entry }) {
     stored: entry.verdict,
     resetKey: entry.id,
     save: (text) => {
-      if (text !== entry.verdict) updateEntry(entry.id, { verdict: text });
+      if (text !== entry.verdict) return updateEntry(entry.id, { verdict: text });
     },
   });
 

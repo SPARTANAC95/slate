@@ -1,8 +1,10 @@
 import { isTauri } from './platform';
+import { textSaves } from './textSaveQueue';
 
 type Listener = () => void;
 
 const listeners = new Set<Listener>();
+const updateListeners = new Set<() => Promise<void>>();
 let wired = false;
 
 const fire = () => {
@@ -35,4 +37,15 @@ export function onWindowGoingAway(fn: Listener): () => void {
   return () => {
     listeners.delete(fn);
   };
+}
+
+/** Await text writes before an updater is allowed to terminate the process. */
+export function onBeforeUpdate(fn: () => Promise<void>): () => void {
+  updateListeners.add(fn);
+  return () => { updateListeners.delete(fn); };
+}
+
+export async function flushBeforeUpdate(): Promise<void> {
+  await Promise.all([...updateListeners].map(fn => fn()));
+  await textSaves.wait();
 }

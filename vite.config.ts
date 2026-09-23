@@ -15,6 +15,6 @@ export default defineConfig({
     environment: 'node',
     // the proxy's provider code is plain js, but its date parsing still needs
     // pinning down — steam publishes release dates as prose
-    include: ['src/**/*.test.ts', 'server/**/*.test.js'],
+    include: ['src/**/*.test.ts', 'server/**/*.test.js', 'tools/**/*.test.js'],
   },
 });

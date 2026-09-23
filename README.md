@@ -51,11 +51,13 @@ Countdowns keep the nearest plans visible. The upcoming view puts all unfinished
 
 ## Get started in a minute
 
-1. Download **`Slate_0.1.0_x64-setup.exe`** from [Releases](https://github.com/SPARTANAC95/slate/releases/latest) and install it on Windows 10/11, x64.
+1. Download the latest **Windows x64 setup file** from [Releases](https://github.com/SPARTANAC95/slate/releases/latest) and install it on Windows 10/11, x64.
 2. Open **Slate** from the Start menu. Type `#event cinema tomorrow 20:00` and press **Enter**.
 3. Click any day to edit entries or write a daily note. Press **Ctrl+K** for search, preferences, import, and export.
 
-The current installer is unsigned, so Windows may show an unknown-publisher prompt. Check that your file came from this repository's Releases page; each release includes a SHA-256 checksum.
+The installer has no Windows publisher certificate, so Windows may show an unknown-publisher prompt. Check that your file came from this repository's Releases page; each release includes a SHA-256 checksum.
+
+**Stay up to date:** Slate 0.1.1 and newer check for new releases automatically. Open **Preferences → App updates** to check manually, read release notes, or choose **Install and restart**. Slate verifies the download and backs up your calendar before installing. If you have 0.1.0, install the latest setup file once to enable this. [How updates and releases work →](docs/RELEASING.md)
 
 Closing the window keeps Slate in the system tray. Use **Quit** in the tray menu to exit completely. Reminders and Google sync require Slate to remain running.
 

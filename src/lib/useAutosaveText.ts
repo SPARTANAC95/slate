@@ -1,17 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
-import { onWindowGoingAway } from './lifecycle';
+import { onBeforeUpdate, onWindowGoingAway } from './lifecycle';
+import { textSaves } from './textSaveQueue';
 
 type Options = {
   /** the stored text; undefined while it is still loading */
   stored: string | undefined;
   /** changing this re-seeds the field (a different day, a different entry) */
   resetKey: string;
-  save: (text: string) => void;
+  save: (text: string) => void | Promise<unknown>;
   delay?: number;
 };
 
 /** uncommitted text, carrying the save that belongs to it */
-type Pending = { text: string; save: (text: string) => void };
+type Pending = { key: string; text: string; save: (text: string) => void | Promise<unknown> };
 
 /**
  * A text field that saves itself: `delay` ms after typing stops, on blur, and
@@ -40,12 +41,17 @@ export function useAutosaveText({ stored, resetKey, save, delay = 500 }: Options
     if (timer.current) clearTimeout(timer.current);
     timer.current = null;
     if (pending.current !== null) {
-      pending.current.save(pending.current.text);
+      const task = pending.current;
       pending.current = null;
+      textSaves.enqueue(task.key, () => task.save(task.text));
     }
   };
   const flushRef = useRef(flush);
   flushRef.current = flush;
+
+  useEffect(() => onBeforeUpdate(async () => {
+    flushRef.current();
+  }), []);
 
   const onChange = (next: string) => {
     setValue(next);
@@ -54,7 +60,7 @@ export function useAutosaveText({ stored, resetKey, save, delay = 500 }: Options
     // time would file half-typed text against whatever you had just switched
     // to — the parent re-renders with a save aimed at the new target before
     // this hook's cleanup gets to run.
-    pending.current = { text: next, save };
+    pending.current = { key: resetKey, text: next, save };
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => flushRef.current(), delay);
   };

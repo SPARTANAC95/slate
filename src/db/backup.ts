@@ -30,6 +30,21 @@ export async function dumpAll(): Promise<BackupFile> {
   return pack(entries, dayNotes);
 }
 
+let mirrorPaused = false;
+
+/** Keep an older debounced mirror from overwriting the final update snapshot. */
+export async function backupBeforeUpdate(): Promise<() => void> {
+  mirrorPaused = true;
+  const resume = () => { mirrorPaused = false; };
+  try {
+    if (!await writeBackup(JSON.stringify(await dumpAll()))) throw new Error('Backup failed');
+    return resume;
+  } catch (error) {
+    resume();
+    throw error;
+  }
+}
+
 /** ask the browser to never evict this origin's IndexedDB */
 export async function requestPersistentStorage(): Promise<void> {
   try {
@@ -52,6 +67,7 @@ export function startBackups(onStatus: (s: BackupStatus) => void): () => void {
 
   const write = async () => {
     timer = null;
+    if (mirrorPaused) return;
     const snapshot = pending;
     if (snapshot === null) return;
     onStatus({ state: 'saving' });
@@ -73,6 +89,7 @@ export function startBackups(onStatus: (s: BackupStatus) => void): () => void {
   });
 
   const onGoingAway = () => {
+    if (mirrorPaused) return;
     // a debounce is still waiting — get the current snapshot out now
     if (!timer || pending === null) return;
     clearTimeout(timer);

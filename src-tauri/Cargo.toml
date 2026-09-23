@@ -1,6 +1,6 @@
 [package]
 name = "slate"
-version = "0.1.0"
+version = "0.1.1"
 description = "Personal release calendar"
 authors = ["SPARTANAC95"]
 repository = "https://github.com/SPARTANAC95/slate"
@@ -31,6 +31,7 @@ rand = "0.9"
 # by way of reqwest, so declaring it costs no extra build
 futures-util = "0.3"
 chrono = "0.4"
+tauri-plugin-updater = "2"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-autostart = "2"

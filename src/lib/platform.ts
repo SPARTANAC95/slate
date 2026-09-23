@@ -76,7 +76,14 @@ export async function readBackup(): Promise<string | null> {
 }
 
 /** Mirror the database to disk. Returns true only if it actually landed. */
-export async function writeBackup(json: string): Promise<boolean> {
+let backupQueue: Promise<boolean> = Promise.resolve(true);
+export function writeBackup(json: string): Promise<boolean> {
+  const next = backupQueue.then(() => writeBackupNow(json));
+  backupQueue = next;
+  return next;
+}
+
+async function writeBackupNow(json: string): Promise<boolean> {
   try {
     if (isTauri()) {
       const { invoke } = await import('@tauri-apps/api/core');

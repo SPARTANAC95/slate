@@ -33,10 +33,10 @@ Build output:
 
 ```text
 src-tauri/target/release/slate.exe
-src-tauri/target/release/bundle/nsis/Slate_0.1.0_x64-setup.exe
+src-tauri/target/release/bundle/nsis/Slate_0.1.1_x64-setup.exe
 ```
 
-The installer is currently unsigned. `slate.cmd` launches a local release build, building it first when missing. `tools/New-Shortcuts.ps1` creates local development shortcuts; the installer creates the normal installed-app entry.
+`build:app` creates a development installer without an updater signature. Use `npm run release:build` for a signed public release; see [Releasing Slate](RELEASING.md). Update signatures are separate from a Windows publisher certificate. `slate.cmd` launches a local release build, building it first when missing. `tools/New-Shortcuts.ps1` creates local development shortcuts; the installer creates the normal installed-app entry.
 
 ## Checks
 
@@ -48,7 +48,7 @@ cd src-tauri
 cargo test --locked --lib
 ```
 
-GitHub Actions runs the web checks on Linux and native tests plus NSIS packaging on Windows. It stores the installer as a workflow artifact. Public Releases are curated separately; a successful workflow does not automatically publish a release.
+GitHub Actions runs the web checks on Linux and native tests plus NSIS packaging on Windows. Branch checks store a development installer as a workflow artifact. The separate release workflow publishes signed releases when a version tag is pushed, provided signing secrets are configured and Actions is available. [Release instructions and local fallback](RELEASING.md).
 
 Before a release, also exercise quick add, import/export, reload persistence, backlog scheduling, notes/verdicts, and tray behavior. Provider sign-in and real Windows notifications need their own runtime checks; passing unit tests does not certify those external services.
 

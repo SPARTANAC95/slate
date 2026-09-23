@@ -16,6 +16,7 @@ import { checkAndNotify, notificationsEnabled, setNotificationsEnabled } from '.
 import { ApiKeysPanel } from './ApiKeysPanel';
 import { Toggle } from './Toggle';
 import { GoogleCalendarPanel } from './GoogleCalendarPanel';
+import { UpdatesPanel } from './UpdatesPanel';
 
 export function Preferences({ onClose, onNote }: { onClose: () => void; onNote: (t: string) => void }) {
   const desktop = isTauri();
@@ -75,6 +76,8 @@ export function Preferences({ onClose, onNote }: { onClose: () => void; onNote: 
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="section-label mb-3">preferences</div>
+
+        <UpdatesPanel />
 
         <GoogleCalendarPanel />
 

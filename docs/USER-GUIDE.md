@@ -4,7 +4,9 @@
 
 ## Install and open
 
-Download the Windows x64 setup file from Releases, run it, and launch Slate from your Start menu. The unsigned installer may show an unknown-publisher warning. The release provides a SHA-256 checksum you can compare with `Get-FileHash .\Slate_0.1.0_x64-setup.exe -Algorithm SHA256` in PowerShell.
+Download the Windows x64 setup file from Releases, run it, and launch Slate from your Start menu. The installer has no Windows publisher certificate and may show an unknown-publisher warning. Each release provides a SHA-256 checksum for its setup file.
+
+From version 0.1.1, Slate checks for new versions automatically. Open **Preferences → App updates** to check manually or turn automatic checks off. Choose **Install and restart** when ready; the app verifies the download, saves pending notes, and backs up your calendar first. Save any open form before installing. If you use 0.1.0, run the latest installer once to get the updater. [More about updates](RELEASING.md).
 
 Start with one entry. No account or API key is needed for manual planning. Slate is designed for a desktop window at least 900 pixels wide.
 
