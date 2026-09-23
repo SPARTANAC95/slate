@@ -59,12 +59,12 @@ export function YearView({ entries, year, onJumpToDay }: Props) {
   };
 
   return (
-    <div className="fade-in flex min-h-0 flex-1 flex-col px-1">
+    <div className="fade-in flex min-h-0 min-w-0 flex-1 flex-col px-1">
       <p className="mb-4 text-center font-mono text-12 text-text-3">
         {totals.logged} logged
         {totals.scheduled > 0 && ` · ${totals.scheduled} scheduled`}
       </p>
-      <div className="flex min-h-0 flex-1 overflow-y-auto">
+      <div className="flex min-h-0 flex-1 overflow-auto">
         <div className="m-auto flex gap-6 pb-4">
           {Array.from({ length: 12 }, (_, m) => {
             const daysInMonth = new Date(year, m + 1, 0).getDate();

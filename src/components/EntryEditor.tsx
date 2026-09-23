@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Entry, EntryKind } from '../types';
 import { KIND_ORDER } from '../types';
 import { cleanCount, useEntryForm } from '../lib/useEntryForm';
@@ -13,6 +13,7 @@ type Props = {
   /** …or creating a new one on this day */
   date?: string;
   onDone: () => void;
+  onSaved?: (date: string | null) => void;
 };
 
 const field =
@@ -22,8 +23,11 @@ const field =
 /** the kinds a provider can actually tell us anything about */
 const EXTERNAL = new Set<EntryKind>(['film', 'series', 'game']);
 
-export function EntryEditor({ entry, date, onDone }: Props) {
+export function EntryEditor({ entry, date, onDone, onSaved }: Props) {
   const f = useEntryForm(entry, date);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const busy = useRef(false);
   const [highlight, setHighlight] = useState(-1);
   /**
    * Set once a result has been taken, or once the dropdown has been waved
@@ -84,7 +88,14 @@ export function EntryEditor({ entry, date, onDone }: Props) {
       className="fade-in flex flex-col gap-2 rounded-lg border border-line bg-bg p-2.5"
       onSubmit={async (e) => {
         e.preventDefault();
-        if (await f.submit()) onDone();
+        if (busy.current) return;
+        busy.current = true;
+        setSaving(true);
+        setError('');
+        try {
+          if (await f.submit()) { onSaved?.(f.dateVal || null); onDone(); }
+        } catch { setError('Could not save this entry. Your edits are still here; try again.'); }
+        finally { busy.current = false; setSaving(false); }
       }}
       // escape closes the editor the way it closes everything else here
       onKeyDown={(e) => {
@@ -117,7 +128,7 @@ export function EntryEditor({ entry, date, onDone }: Props) {
           />
         )}
       </div>
-      <div className="flex gap-2">
+      <div className="grid grid-cols-[minmax(0,1fr)_108px] gap-2">
         <select
           value={f.kind}
           onChange={(e) => {
@@ -126,7 +137,7 @@ export function EntryEditor({ entry, date, onDone }: Props) {
             setLookupOff(false);
           }}
           aria-label="kind"
-          className={`${field} flex-1`}
+          className={`${field} col-span-2 min-w-0`}
         >
           {KIND_ORDER.map((k) => (
             <option key={k} value={k}>
@@ -139,7 +150,7 @@ export function EntryEditor({ entry, date, onDone }: Props) {
           value={f.dateVal}
           onChange={(e) => f.setDateVal(e.target.value)}
           aria-label="date"
-          className={`${field} flex-1 font-mono text-12`}
+          className={`${field} min-w-0 w-full font-mono text-12`}
         />
         <input
           type="time"
@@ -234,6 +245,7 @@ export function EntryEditor({ entry, date, onDone }: Props) {
       <div className="mt-0.5 flex items-center gap-2">
         <button
           type="submit"
+          disabled={saving}
           className="rounded-lg border border-line-strong bg-panel-hover px-3 py-1 text-12 text-text transition-colors duration-150 hover:bg-panel"
         >
           {entry ? 'Save' : 'Add'}
@@ -247,6 +259,7 @@ export function EntryEditor({ entry, date, onDone }: Props) {
         </button>
         {f.dateVal === '' && <span className="ml-auto text-11 text-text-3">no date — backlog</span>}
       </div>
+      {error && <p role="alert" className="text-12 text-amber-300">{error}</p>}
     </form>
   );
 }

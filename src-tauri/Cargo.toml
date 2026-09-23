@@ -1,6 +1,6 @@
 [package]
 name = "slate"
-version = "0.1.1"
+version = "0.1.2"
 description = "Personal release calendar"
 authors = ["SPARTANAC95"]
 repository = "https://github.com/SPARTANAC95/slate"

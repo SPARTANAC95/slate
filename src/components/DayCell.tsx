@@ -18,6 +18,7 @@ const MAX_CHIPS = 3;
 export function DayCell({ day, iso, inMonth, entries, selected, onSelect }: Props) {
   const today = isToday(day);
   const [dragOver, setDragOver] = useState(false);
+  const [dropError, setDropError] = useState(false);
   const shown = entries.slice(0, MAX_CHIPS);
   const overflow = entries.length - shown.length;
 
@@ -38,13 +39,14 @@ export function DayCell({ day, iso, inMonth, entries, selected, onSelect }: Prop
         // dragleave bubbles from child chips; ignore moves within this cell
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragOver(false);
       }}
-      onDrop={(e) => {
+      onDrop={async (e) => {
         e.preventDefault();
         setDragOver(false);
         const id = e.dataTransfer.getData('text/slate-entry');
         if (id) {
-          updateEntry(id, { date: iso });
-          onSelect(iso);
+          setDropError(false);
+          try { await updateEntry(id, { date: iso }); onSelect(iso); }
+          catch { setDropError(true); }
         }
       }}
       className={`flex h-full flex-col items-stretch gap-1 overflow-hidden p-2 text-left transition-colors duration-150 ${
@@ -80,6 +82,7 @@ export function DayCell({ day, iso, inMonth, entries, selected, onSelect }: Prop
       {overflow > 0 && (
         <span className="pl-[14px] font-mono text-11 text-text-3">+{overflow} more</span>
       )}
+      {dropError && <span role="alert" className="text-11 text-amber-300">Could not move item. Try again.</span>}
     </button>
   );
 }

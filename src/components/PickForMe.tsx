@@ -24,14 +24,15 @@ const chip =
   'transition-colors duration-150 hover:bg-panel-hover hover:text-text';
 
 /** a dice roll over the backlog for when deciding is the hard part */
-export function PickForMe({ backlog }: { backlog: Entry[] }) {
+export function PickForMe({ backlog, onScheduled }: { backlog: Entry[]; onScheduled?: (date: string) => void }) {
   const [kind, setKind] = useState<'any' | EntryKind>('any');
   const [budget, setBudget] = useState<TimeBudget>('any');
   // hold the id, not the row — the rendered copy must follow later edits
   const [pickedId, setPickedId] = useState<string | null>(null);
+  const [error, setError] = useState('');
 
   const candidates = backlog.filter(
-    (e) => (kind === 'any' || e.kind === kind) && fitsBudget(e, budget),
+    (e) => !e.done && e.deletedAt === null && (kind === 'any' || e.kind === kind) && fitsBudget(e, budget),
   );
 
   const roll = () => {
@@ -44,8 +45,12 @@ export function PickForMe({ backlog }: { backlog: Entry[] }) {
   // clear the pick only once the write is really in — dropping it first would
   // leave a failed schedule looking exactly like a successful one
   const schedule = async (id: string, date: string) => {
-    await updateEntry(id, { date });
-    setPickedId(null);
+    setError('');
+    try {
+      await updateEntry(id, { date });
+      setPickedId(null);
+      onScheduled?.(date);
+    } catch { setError('Could not schedule this item. Try again.'); }
   };
 
   const current = candidates.find((e) => e.id === pickedId) ?? null;
@@ -121,6 +126,7 @@ export function PickForMe({ backlog }: { backlog: Entry[] }) {
       {candidates.length === 0 && backlog.length > 0 && (
         <p className="mt-2 text-11 text-text-3">nothing in the backlog fits these filters</p>
       )}
+      {error && <p role="alert" className="mt-2 text-11 text-amber-300">{error}</p>}
     </>
   );
 }

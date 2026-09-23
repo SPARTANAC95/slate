@@ -7,21 +7,22 @@ import { EntryActions } from './EntryActions';
 import { EntryMeta } from './EntryMeta';
 import { DelayHistory } from './DelayHistory';
 import { DoneControls } from './DoneControls';
+import { BacklogSchedule } from './BacklogSchedule';
 
 /**
  * Every row can be dragged onto a day cell — a backlog item to schedule it, a
- * dated one to move it. The grab cursor is reserved for the backlog, where
- * dragging is the main way out; on a day the title is a button and the row
- * should not look like a handle.
+ * dated one to move it. Backlog rows also provide explicit schedule actions.
+ * The grab cursor is reserved for undated rows.
  */
-export function EntryRow({ entry, draggable = true }: { entry: Entry; draggable?: boolean }) {
+export function EntryRow({ entry, draggable = true, onScheduled }: { entry: Entry; draggable?: boolean; onScheduled?: (date: string) => void }) {
   const [editing, setEditing] = useState(false);
+  const [error, setError] = useState('');
   const grab = draggable && entry.date === null;
 
   if (editing) {
     return (
       <li className="py-1">
-        <EntryEditor entry={entry} onDone={() => setEditing(false)} />
+        <EntryEditor entry={entry} onDone={() => setEditing(false)} onSaved={date => { if (date && entry.date === null) onScheduled?.(date); }} />
       </li>
     );
   }
@@ -67,11 +68,14 @@ export function EntryRow({ entry, draggable = true }: { entry: Entry; draggable?
           >
             {entry.title}
           </button>
-          <EntryActions entry={entry} onEdit={() => setEditing(true)} />
+          {entry.date !== null && <EntryActions entry={entry} onEdit={() => setEditing(true)} onError={setError} />}
         </span>
         {entry.notes && <span className="block truncate text-11 text-text-3">{entry.notes}</span>}
         <EntryMeta entry={entry} />
         <DelayHistory entry={entry} />
+        {entry.date === null && <span className="mt-2 block"><EntryActions entry={entry} onEdit={() => setEditing(true)} onError={setError} /></span>}
+        {entry.date === null && !entry.done && <BacklogSchedule entry={entry} onScheduled={onScheduled} />}
+        {error && <span role="alert" className="mt-1 block text-11 text-amber-300">{error}</span>}
         {entry.done && <DoneControls entry={entry} />}
       </span>
     </li>

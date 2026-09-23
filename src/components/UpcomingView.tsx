@@ -4,6 +4,7 @@ import { fromISODate } from '../lib/dates';
 import { allCountdowns, countdownLabel, type RailItem } from '../lib/rail';
 import { formatRuntime } from '../lib/runtime';
 import { KindDot } from './KindDot';
+import { EntryRow } from './EntryRow';
 
 type Props = {
   entries: Entry[];
@@ -66,7 +67,7 @@ export function UpcomingView({ entries, onJumpToDay }: Props) {
   const total = dated.length + undated.length;
 
   return (
-    <div className="fade-in flex min-h-0 flex-1 flex-col">
+    <div className="fade-in flex min-h-0 min-w-0 flex-1 flex-col">
       <p className="mb-3 text-center font-mono text-12 text-text-3">
         {total === 0 ? 'nothing tracked yet' : `${total} tracked`}
         {undated.length > 0 && ` · ${undated.length} without a date`}
@@ -82,17 +83,7 @@ export function UpcomingView({ entries, onJumpToDay }: Props) {
               <div className="section-label mb-1 mt-4 border-t border-line pt-3">
                 no date yet
               </div>
-              {undated.map((entry) => (
-                <div key={entry.id} className={`${ROW} cursor-default`}>
-                  <span className={`${COUNT} text-text-3`}>···</span>
-                  <KindDot kind={entry.kind} />
-                  <span className="min-w-0 flex-1 truncate text-13 text-text-2">{entry.title}</span>
-                  <Trailing entry={entry} />
-                  <span className="w-[80px] shrink-0 text-right font-mono text-11 text-text-3">
-                    tba
-                  </span>
-                </div>
-              ))}
+              <ul>{undated.map(entry => <EntryRow key={entry.id} entry={entry} draggable={false} onScheduled={onJumpToDay} />)}</ul>
             </>
           )}
 

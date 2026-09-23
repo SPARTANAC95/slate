@@ -68,7 +68,7 @@ export default function App() {
   // undefined until indexeddb opens — "loading" and "empty" are different
   const loaded = useLiveEntries();
   const entries = loaded ?? [];
-  const backlogCount = entries.filter((e) => e.date === null).length;
+  const backlogCount = entries.filter((e) => e.date === null && !e.done).length;
 
   const flash = (text: string) => {
     setNote(text);
@@ -186,6 +186,7 @@ export default function App() {
 
   const jumpTo = (date: string | null) => {
     if (!date) return setShowBacklog(true);
+    setShowBacklog(false);
     setView('month');
     setDirection(null);
     setSelected(date);
@@ -251,15 +252,15 @@ export default function App() {
 
       <UpdateNotice onDetails={() => setPrefsOpen(true)} />
       <div className="flex min-h-0 flex-1 gap-5 px-7 pb-6">
+        {showBacklog && <Backlog entries={entries} onClose={() => setShowBacklog(false)} onScheduled={jumpTo} />}
         {view === 'upcoming' ? (
           <UpcomingView entries={entries} onJumpToDay={jumpTo} />
         ) : view === 'year' ? (
           <YearView entries={entries} year={yearCursor} onJumpToDay={jumpTo} />
         ) : (
           <>
-            {showBacklog && <Backlog entries={entries} />}
             <main className="flex min-w-0 flex-1 flex-col">
-              <QuickAdd onAdded={jumpTo} onNote={flash} />
+              <QuickAdd onAdded={date => date ? jumpTo(date) : flash('saved to backlog — open it when you’re ready')} onNote={flash} />
               {loaded !== undefined && entries.length === 0 && (
                 <p className="mb-3 px-3 text-12 text-text-3">
                   nothing scheduled yet — type a title and a date above, like{' '}
@@ -276,11 +277,11 @@ export default function App() {
                   direction={direction}
                   entries={entries}
                   selected={selected}
-                  onSelect={setSelected}
+                  onSelect={date => { setSelected(date); setShowBacklog(false); }}
                 />
               </div>
             </main>
-            <DayPanel date={selected} entries={entries} />
+            {!showBacklog && <DayPanel date={selected} entries={entries} />}
           </>
         )}
       </div>

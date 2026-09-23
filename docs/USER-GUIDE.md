@@ -30,7 +30,9 @@ You can also click a day and choose **add entry** for the full editor. It includ
 
 Click a day to see its entries and daily note in the side panel. Click an entry title to edit it. The countdown rail shows the nearest unfinished entries; click one to jump to its date.
 
-Open **backlog** to see undated ideas. Drag one onto a calendar day or edit its date. **Pick for me** offers a suggestion based on kind and the time you have; you can reroll or schedule the result.
+Open **backlog** from Month, Year, or Upcoming to see undated ideas. Use **Add to backlog** to create one. Each waiting item has visible **Edit**, **Delete**, **done**, **Today**, and **Choose date** controls. Scheduling opens the chosen day; you can also drag an item onto the month calendar. Finished ideas move to **Completed**, where **Undo** puts them back. Expand **Help me choose** for a suggestion based on kind and available time.
+
+Adding an undated idea through quick add saves it without opening the panel. Close Backlog with its **×** button or click a calendar day. Undated rows in **upcoming** have the same controls.
 
 Open **upcoming** for a chronological list with countdowns. Open **year** for an overview of scheduled and completed activity.
 
