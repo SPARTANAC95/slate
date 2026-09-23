@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { Command } from 'cmdk';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { Entry } from '../types';
-import { addEntry, db, restoreEntry } from '../db';
+import { db, restoreEntry } from '../db';
 import { parseQuickAdd } from '../lib/parse';
+import { addParsed } from '../lib/quickAddActions';
 import { matchEntries } from '../lib/search';
 import { CreateItem, EntryItems, ITEM_CLASS, JumpItem, RestoreItems } from './PaletteItems';
 
@@ -13,6 +14,7 @@ type Props = {
   entries: Entry[];
   onJump: (date: string | null) => void;
   onToggleYear: () => void;
+  onToggleUpcoming: () => void;
   onExport: () => void;
   onImport: () => void;
   onShowHelp: () => void;
@@ -21,7 +23,7 @@ type Props = {
 
 export function CommandPalette(props: Props) {
   const { open, onClose, entries, onJump, onToggleYear, onExport, onImport, onShowHelp } = props;
-  const { onShowPreferences } = props;
+  const { onShowPreferences, onToggleUpcoming } = props;
   const [value, setValue] = useState('');
   const [page, setPage] = useState<'root' | 'restore'>('root');
   const deleted =
@@ -40,6 +42,7 @@ export function CommandPalette(props: Props) {
   const parsed = q ? parseQuickAdd(value) : null;
   const matches = matchEntries(entries, q);
   const commands = [
+    { label: 'upcoming — countdowns for everything', run: onToggleUpcoming },
     { label: 'toggle year view', run: onToggleYear },
     { label: 'preferences — api keys, reminders', run: onShowPreferences },
     { label: 'keyboard shortcuts', run: onShowHelp },
@@ -109,19 +112,9 @@ export function CommandPalette(props: Props) {
                 {parsed?.title && (
                   <CreateItem
                     parsed={parsed}
-                    onSelect={() =>
-                      finish(async () => {
-                        await addEntry({
-                          title: parsed.title,
-                          kind: parsed.kind,
-                          date: parsed.date,
-                          annual: parsed.annual,
-                          series: parsed.series,
-                          tags: parsed.tags,
-                        });
-                        onJump(parsed.date);
-                      })
-                    }
+                    // the same add quick add does, so a typed hour is not
+                    // dropped on the floor here and kept there
+                    onSelect={() => finish(() => addParsed(parsed).then(onJump))}
                   />
                 )}
               </>

@@ -41,8 +41,10 @@ export function PickForMe({ backlog }: { backlog: Entry[] }) {
     setPickedId(pool[Math.floor(Math.random() * pool.length)].id);
   };
 
-  const schedule = (id: string, date: string) => {
-    updateEntry(id, { date });
+  // clear the pick only once the write is really in — dropping it first would
+  // leave a failed schedule looking exactly like a successful one
+  const schedule = async (id: string, date: string) => {
+    await updateEntry(id, { date });
     setPickedId(null);
   };
 

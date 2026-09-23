@@ -2,12 +2,17 @@ import type { DateChange, DayNote, Entry } from '../types';
 
 const isISODate = (v: unknown): v is string =>
   typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+const isTime = (v: unknown): v is string =>
+  typeof v === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
 const num = (v: unknown, fallback: number): number =>
   typeof v === 'number' && Number.isFinite(v) ? v : fallback;
 const str = (v: unknown): string => (typeof v === 'string' ? v : '');
 const arr = <T,>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
 
 const KINDS = new Set(['game', 'film', 'series', 'event', 'note', 'task']);
+// 'rawg' is retired, but an import carrying it must keep its poster rather
+// than have the whole external link thrown away
+const SOURCES = new Set(['tmdb', 'igdb', 'steam', 'rawg']);
 
 const cleanHistory = (v: unknown, fallbackDate: string | null): DateChange[] => {
   const rows = arr<Partial<DateChange>>(v)
@@ -33,6 +38,7 @@ export function normalizeEntry(raw: unknown): Entry | null {
   if (typeof e.title !== 'string') return null;
 
   const date = isISODate(e.date) ? e.date : null;
+  const dateHistory = cleanHistory(e.dateHistory, date);
   const rawSeries = e.series as Entry['series'];
   const series =
     rawSeries && typeof rawSeries === 'object'
@@ -40,7 +46,7 @@ export function normalizeEntry(raw: unknown): Entry | null {
       : null;
   const ext = e.external as Entry['external'];
   const external =
-    ext && typeof ext === 'object' && (ext.source === 'tmdb' || ext.source === 'rawg')
+    ext && typeof ext === 'object' && SOURCES.has(ext.source)
       ? {
           source: ext.source,
           id: str(ext.id),
@@ -50,13 +56,25 @@ export function normalizeEntry(raw: unknown): Entry | null {
 
   return {
     id: e.id,
-    title: e.title,
+    // a blank title is a row with nothing to click on
+    title: e.title.trim() === '' ? 'untitled' : e.title,
     kind: KINDS.has(e.kind as string) ? (e.kind as Entry['kind']) : 'note',
     date,
+    // an hour without a day has nothing to hang on
+    time: date !== null && isTime(e.time) ? e.time : null,
     annual: e.annual === true,
-    dateHistory: cleanHistory(e.dateHistory, date),
+    // an older export has no pin flag — infer it the way the v4 upgrade does
+    datePinned:
+      typeof e.datePinned === 'boolean'
+        ? e.datePinned
+        : date !== null && dateHistory[dateHistory.length - 1].source === 'manual',
+    dateHistory,
     done: e.done === true,
-    rating: typeof e.rating === 'number' ? e.rating : null,
+    // the five squares can only show 1–5; anything else would draw as nothing
+    rating:
+      typeof e.rating === 'number' && Number.isInteger(e.rating) && e.rating >= 1 && e.rating <= 5
+        ? e.rating
+        : null,
     verdict: str(e.verdict),
     notes: str(e.notes),
     links: arr<string>(e.links).filter((l) => typeof l === 'string'),

@@ -2,9 +2,10 @@ import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { monthName } from '../lib/dates';
 import type { BackupStatus } from '../db/backup';
 import { BackupIndicator } from './BackupIndicator';
+import { GoogleSyncIndicator } from './GoogleSyncIndicator';
 
 type Props = {
-  view: 'month' | 'year';
+  view: 'month' | 'year' | 'upcoming';
   cursor: { year: number; month: number };
   yearCursor: number;
   showBacklog: boolean;
@@ -17,6 +18,8 @@ type Props = {
   onRefresh: () => void;
   onToggleBacklog: () => void;
   onToggleYear: () => void;
+  onToggleUpcoming: () => void;
+  onPreferences: () => void;
 };
 
 const toggle = (active: boolean) =>
@@ -38,10 +41,20 @@ export function Header(p: Props) {
         <button type="button" onClick={p.onToggleYear} aria-pressed={p.view === 'year'} className={toggle(p.view === 'year')}>
           year
         </button>
+        <button
+          type="button"
+          onClick={p.onToggleUpcoming}
+          aria-pressed={p.view === 'upcoming'}
+          className={toggle(p.view === 'upcoming')}
+        >
+          upcoming
+        </button>
       </span>
 
       <h1 className="text-18 font-semibold tracking-[-0.02em]">
-        {p.view === 'year' ? (
+        {p.view === 'upcoming' ? (
+          <span className="font-normal text-text-2">upcoming</span>
+        ) : p.view === 'year' ? (
           <span className="font-mono font-normal">{p.yearCursor}</span>
         ) : (
           <>
@@ -54,6 +67,7 @@ export function Header(p: Props) {
       <div className="flex items-center justify-end gap-1">
         {p.note && <span className="mr-2 text-11 text-text-3">{p.note}</span>}
         <BackupIndicator status={p.backup} />
+        <GoogleSyncIndicator onClick={p.onPreferences} />
         <button
           type="button"
           onClick={p.onRefresh}
@@ -64,12 +78,27 @@ export function Header(p: Props) {
         >
           <RefreshCw size={14} />
         </button>
-        <button type="button" onClick={() => p.onMove(-1)} aria-label="previous month" className={navBtn}>
-          <ChevronLeft size={14} />
-        </button>
-        <button type="button" onClick={() => p.onMove(1)} aria-label="next month" className={navBtn}>
-          <ChevronRight size={14} />
-        </button>
+        {/* one list of everything has no pages to turn */}
+        {p.view !== 'upcoming' && (
+          <>
+            <button
+              type="button"
+              onClick={() => p.onMove(-1)}
+              aria-label={p.view === 'year' ? 'previous year' : 'previous month'}
+              className={navBtn}
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={() => p.onMove(1)}
+              aria-label={p.view === 'year' ? 'next year' : 'next month'}
+              className={navBtn}
+            >
+              <ChevronRight size={14} />
+            </button>
+          </>
+        )}
         <button
           type="button"
           onClick={p.onToday}

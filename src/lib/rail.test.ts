@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { railItems } from './rail';
+import { allCountdowns, countdownLabel, railItems } from './rail';
 import { nextAnnualOccurrence } from './dates';
 import type { Entry } from '../types';
 
@@ -11,7 +11,9 @@ const entry = (patch: Partial<Entry>): Entry => ({
   title: 't',
   kind: 'note',
   date: null,
+  time: null,
   annual: false,
+  datePinned: false,
   dateHistory: [],
   done: false,
   rating: null,
@@ -80,5 +82,43 @@ describe('railItems', () => {
     const rail = railItems(es, NOW);
     expect(rail[0].date).toBe('2027-07-04');
     expect(rail[0].days).toBeGreaterThan(0);
+  });
+});
+
+describe('countdownLabel', () => {
+  it('says the near days in words', () => {
+    expect(countdownLabel(0)).toBe('today');
+    expect(countdownLabel(1)).toBe('tomorrow');
+  });
+
+  it('counts the rest, and counts backwards for overdue', () => {
+    expect(countdownLabel(2)).toBe('2');
+    expect(countdownLabel(123)).toBe('123');
+    expect(countdownLabel(-3)).toBe('−3');
+  });
+});
+
+describe('allCountdowns', () => {
+  // the upcoming view and the rail must never disagree about what is next;
+  // the rail is simply the first six of this
+  it('is the rail without the cap, in the same order', () => {
+    const es = [
+      entry({ title: 'far', date: '2026-12-01' }),
+      entry({ title: 'near', date: '2026-08-15' }),
+      entry({ title: 'mid', date: '2026-09-01' }),
+      entry({ title: 'past', date: '2026-07-01' }),
+      entry({ title: 'backlog', date: null }),
+    ];
+    const all = allCountdowns(es, NOW);
+    expect(all.map((r) => r.entry.title)).toEqual(['past', 'near', 'mid', 'far']);
+    expect(railItems(es, NOW, 2)).toEqual(all.slice(0, 2));
+  });
+
+  it('holds more than the rail ever shows', () => {
+    const es = Array.from({ length: 20 }, (_, i) =>
+      entry({ title: `e${i}`, date: `2026-09-${String(i + 1).padStart(2, '0')}` }),
+    );
+    expect(allCountdowns(es, NOW)).toHaveLength(20);
+    expect(railItems(es, NOW)).toHaveLength(6);
   });
 });

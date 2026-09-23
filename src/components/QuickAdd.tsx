@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { parseQuickAdd } from '../lib/parse';
 import { useMetadataSearch, type LookupResult } from '../lib/lookup';
-import { addFromResult, addParsed, addWholeSeason } from '../lib/quickAddActions';
+import { addArtOnly, addFromResult, addParsed, addWholeSeason } from '../lib/quickAddActions';
 import { useRotatingExample } from '../lib/useRotatingExample';
 import { SearchDropdown } from './SearchDropdown';
 import { QuickAddPreview } from './QuickAddPreview';
@@ -18,6 +18,7 @@ export function QuickAdd({ onAdded, onNote }: Props) {
   const [value, setValue] = useState('');
   const [highlight, setHighlight] = useState(-1);
   const [busy, setBusy] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const example = useRotatingExample();
   const parsed = value.trim() ? parseQuickAdd(value) : null;
 
@@ -37,6 +38,8 @@ export function QuickAdd({ onAdded, onNote }: Props) {
     setHighlight(-1);
     setBusy(false);
     onAdded(date);
+    // the next thing to add is usually right behind this one
+    requestAnimationFrame(() => inputRef.current?.focus());
   };
 
   /** one guarded entry point — a second Enter must not double-add a season */
@@ -71,6 +74,16 @@ export function QuickAdd({ onAdded, onNote }: Props) {
     });
   };
 
+  /** the poster and nothing else — my title, my date, my kind */
+  const pickArt = (r: LookupResult) => {
+    if (!parsed?.title) return;
+    run(async () => {
+      const date = await addArtOnly(parsed, r);
+      onNote(`added ${parsed.title} with ${r.title}'s cover art`);
+      return date;
+    });
+  };
+
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown' && open) {
       e.preventDefault();
@@ -79,13 +92,24 @@ export function QuickAdd({ onAdded, onNote }: Props) {
       e.preventDefault();
       setHighlight((h) => (h <= 0 ? results.length - 1 : h - 1));
     } else if (e.key === 'Enter') {
-      if (open && highlight >= 0) pick(results[highlight]);
-      else submit();
+      // plain enter with nothing highlighted adds exactly what was typed;
+      // alt+enter means "that art", so it takes the top result by default
+      const index = highlight >= 0 ? highlight : e.altKey && open ? 0 : -1;
+      if (index >= 0) {
+        e.preventDefault();
+        (e.altKey ? pickArt : pick)(results[index]);
+      } else submit();
     } else if (e.key === 'Escape') {
+      // one escape does one thing: the dropdown, then the text — and while
+      // it is doing that, the backlog behind the box stays open
       if (open) {
+        e.stopPropagation();
         clear();
         setHighlight(-1);
-      } else setValue('');
+      } else if (value !== '') {
+        e.stopPropagation();
+        setValue('');
+      }
     }
   };
 
@@ -95,16 +119,20 @@ export function QuickAdd({ onAdded, onNote }: Props) {
         <div className="flex items-center gap-2.5 rounded-lg border border-line bg-panel px-3 transition-colors duration-150 focus-within:border-line-strong">
           <Plus size={14} className="shrink-0 text-text-3" />
           <input
+            ref={inputRef}
             id="quick-add"
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={onKeyDown}
             placeholder={example.text}
             aria-label="quick add"
-            disabled={busy}
-            className={`h-9 min-w-0 flex-1 bg-transparent text-13 text-text outline-none disabled:opacity-60 ${
-              example.fading ? 'ph-fade' : ''
-            }`}
+            // read-only rather than disabled: a disabled field drops focus,
+            // and after every add the cursor was gone from the box
+            readOnly={busy}
+            aria-busy={busy}
+            className={`h-9 min-w-0 flex-1 bg-transparent text-13 text-text outline-none ${
+              busy ? 'opacity-60' : ''
+            } ${example.fading ? 'ph-fade' : ''}`}
           />
         </div>
         {open && (
@@ -112,6 +140,7 @@ export function QuickAdd({ onAdded, onNote }: Props) {
             results={results}
             highlight={highlight}
             onPick={pick}
+            onPickArt={pickArt}
             onHover={setHighlight}
           />
         )}

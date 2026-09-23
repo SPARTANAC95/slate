@@ -9,10 +9,17 @@ type Handlers = {
   moveDay: (delta: number) => void;
   today: () => void;
   year: () => void;
+  upcoming: () => void;
   backlog: () => void;
   help: () => void;
   /** close the topmost open surface; return true if something closed */
   escape: () => boolean;
+  /**
+   * A sheet is open (help, preferences, import). Only escape gets through:
+   * `t` behind a modal used to move the calendar underneath it, and `n` put
+   * the cursor into a box the modal was covering.
+   */
+  blocked: () => boolean;
 };
 
 const ARROW_DAYS: Record<string, number> = {
@@ -30,13 +37,14 @@ export function useShortcuts(handlers: Handlers): void {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const h = ref.current;
+      if (e.key === 'Escape') {
+        if (h.escape()) e.preventDefault();
+        return;
+      }
+      if (h.blocked()) return;
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         h.palette();
-        return;
-      }
-      if (e.key === 'Escape') {
-        if (h.escape()) e.preventDefault();
         return;
       }
 
@@ -48,7 +56,7 @@ export function useShortcuts(handlers: Handlers): void {
         t.isContentEditable;
       if (inField || e.ctrlKey || e.altKey || e.metaKey) return;
 
-      if (e.key in ARROW_DAYS) {
+      if (Object.hasOwn(ARROW_DAYS, e.key)) {
         e.preventDefault();
         // shift jumps a whole month; plain arrows walk days and weeks
         if (e.shiftKey) {
@@ -75,6 +83,9 @@ export function useShortcuts(handlers: Handlers): void {
           break;
         case 'y':
           h.year();
+          break;
+        case 'u':
+          h.upcoming();
           break;
         case 'b':
           h.backlog();

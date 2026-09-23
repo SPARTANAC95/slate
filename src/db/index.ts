@@ -1,10 +1,12 @@
 import Dexie, { type Table } from 'dexie';
 import type { DayNote, Entry, EntryKind } from '../types';
 import { knownRuntime } from '../lib/runtime';
+import type { GoogleLink } from '../lib/googleCalendar';
 
 class SlateDB extends Dexie {
   entries!: Table<Entry, string>;
   dayNotes!: Table<DayNote, string>;
+  googleLinks!: Table<GoogleLink, string>;
 
   constructor() {
     super('slate');
@@ -24,6 +26,18 @@ class SlateDB extends Dexie {
         if (e.runtimeMin === undefined) e.runtimeMin = null;
       }),
     );
+    // v4: entries grew `datePinned` and `time`. Anything whose last date
+    // change was mine is pinned on the way in — that date was already a
+    // deliberate choice, and the refresh should have been leaving it alone.
+    this.version(4).upgrade((tx) =>
+      tx.table('entries').toCollection().modify((e) => {
+        if (e.time === undefined) e.time = null;
+        if (e.datePinned !== undefined) return;
+        const last = e.dateHistory?.[e.dateHistory.length - 1];
+        e.datePinned = e.date !== null && (last === undefined || last.source === 'manual');
+      }),
+    );
+    this.version(5).stores({ googleLinks: 'key, calendarId, entryId' });
   }
 }
 
@@ -35,6 +49,7 @@ export type NewEntry = {
   title: string;
   kind: EntryKind;
   date: string | null;
+  time?: string | null;
   annual?: boolean;
   notes?: string;
   links?: string[];
@@ -43,7 +58,15 @@ export type NewEntry = {
   external?: Entry['external'];
   runtimeMin?: number | null;
   dateSource?: 'manual' | 'api';
+  datePinned?: boolean;
 };
+
+/**
+ * A date I typed is mine to keep. A date left empty is not a choice — a TBA
+ * release must still be free to land when the provider announces it.
+ */
+const pinnedFor = (input: NewEntry): boolean =>
+  input.datePinned ?? (input.date !== null && (input.dateSource ?? 'manual') === 'manual');
 
 export async function addEntry(input: NewEntry): Promise<Entry> {
   const now = Date.now();
@@ -52,7 +75,9 @@ export async function addEntry(input: NewEntry): Promise<Entry> {
     title: input.title.trim(),
     kind: input.kind,
     date: input.date,
+    time: input.time ?? null,
     annual: input.annual ?? false,
+    datePinned: pinnedFor(input),
     dateHistory: [{ date: input.date, changedAt: now, source: input.dateSource ?? 'manual' }],
     done: false,
     rating: null,
@@ -79,7 +104,9 @@ export async function addEntries(inputs: NewEntry[]): Promise<number> {
     title: input.title.trim(),
     kind: input.kind,
     date: input.date,
+    time: input.time ?? null,
     annual: input.annual ?? false,
+    datePinned: pinnedFor(input),
     dateHistory: [{ date: input.date, changedAt: now, source: input.dateSource ?? 'manual' }],
     done: false,
     rating: null,
@@ -101,7 +128,9 @@ export async function addEntries(inputs: NewEntry[]): Promise<number> {
 
 /**
  * The one write path for entries. A date change always appends to
- * dateHistory — the old date is never lost.
+ * dateHistory — the old date is never lost — and moving a date by hand
+ * (editor, drag, "schedule today") pins it, so the next provider refresh
+ * leaves it alone. Pass `datePinned` in the patch to override that.
  */
 export async function updateEntry(
   id: string,
@@ -117,6 +146,7 @@ export async function updateEntry(
         ...current.dateHistory,
         { date: patch.date ?? null, changedAt: Date.now(), source: dateSource },
       ];
+      if (dateSource === 'manual' && patch.datePinned === undefined) next.datePinned = true;
     }
     await db.entries.update(id, next);
   });
@@ -136,7 +166,12 @@ export async function purgeExpiredDeleted(): Promise<void> {
   const expired = await db.entries
     .filter((e) => e.deletedAt !== null && e.deletedAt < cutoff)
     .toArray();
-  if (expired.length) await db.entries.bulkDelete(expired.map((e) => e.id));
+  // Keep unsent cloud deletions until Google has acknowledged them, including
+  // when this machine has been offline for longer than the normal retention.
+  const links = await db.googleLinks.toArray();
+  const pending = new Set(links.filter((link) => !link.deleted).map((link) => link.entryId));
+  const safe = expired.filter((e) => !pending.has(e.id));
+  if (safe.length) await db.entries.bulkDelete(safe.map((e) => e.id));
 }
 
 export async function saveDayNote(date: string, body: string): Promise<void> {

@@ -1,0 +1,544 @@
+{
+  "version": 1,
+  "exportedAt": 1790157600000,
+  "entries": [
+    {
+      "id": "slate-demo-1",
+      "title": "Moonlit Trails",
+      "kind": "game",
+      "date": "2026-09-04",
+      "time": null,
+      "annual": false,
+      "datePinned": true,
+      "dateHistory": [
+        {
+          "date": "2026-09-04",
+          "changedAt": 1790157600000,
+          "source": "manual"
+        }
+      ],
+      "done": true,
+      "rating": 4,
+      "verdict": "A good one to remember.",
+      "notes": "",
+      "links": [],
+      "tags": [
+        "wishlist"
+      ],
+      "external": null,
+      "runtimeMin": null,
+      "series": null,
+      "deletedAt": null,
+      "createdAt": 1790157600000,
+      "updatedAt": 1790157600000
+    },
+    {
+      "id": "slate-demo-2",
+      "title": "Sunday cinema",
+      "kind": "film",
+      "date": "2026-09-06",
+      "time": null,
+      "annual": false,
+      "datePinned": true,
+      "dateHistory": [
+        {
+          "date": "2026-09-06",
+          "changedAt": 1790157600000,
+          "source": "manual"
+        }
+      ],
+      "done": true,
+      "rating": 4,
+      "verdict": "A good one to remember.",
+      "notes": "",
+      "links": [],
+      "tags": [
+        "movie-night"
+      ],
+      "external": null,
+      "runtimeMin": 110,
+      "series": null,
+      "deletedAt": null,
+      "createdAt": 1790157600000,
+      "updatedAt": 1790157600000
+    },
+    {
+      "id": "slate-demo-3",
+      "title": "Northern Lights",
+      "kind": "series",
+      "date": "2026-09-09",
+      "time": null,
+      "annual": false,
+      "datePinned": true,
+      "dateHistory": [
+        {
+          "date": "2026-09-09",
+          "changedAt": 1790157600000,
+          "source": "manual"
+        }
+      ],
+      "done": true,
+      "rating": 4,
+      "verdict": "A good one to remember.",
+      "notes": "One episode. Phone on silent.",
+      "links": [],
+      "tags": [],
+      "external": null,
+      "runtimeMin": 48,
+      "series": {
+        "season": 1,
+        "episode": 1
+      },
+      "deletedAt": null,
+      "createdAt": 1790157600000,
+      "updatedAt": 1790157600000
+    },
+    {
+      "id": "slate-demo-4",
+      "title": "City photo walk",
+      "kind": "event",
+      "date": "2026-09-12",
+      "time": null,
+      "annual": false,
+      "datePinned": true,
+      "dateHistory": [
+        {
+          "date": "2026-09-12",
+          "changedAt": 1790157600000,
+          "source": "manual"
+        }
+      ],
+      "done": true,
+      "rating": 4,
+      "verdict": "A good one to remember.",
+      "notes": "",
+      "links": [],
+      "tags": [],
+      "external": null,
+      "runtimeMin": null,
+      "series": null,
+      "deletedAt": null,
+      "createdAt": 1790157600000,
+      "updatedAt": 1790157600000
+    },
+    {
+      "id": "slate-demo-5",
+      "title": "The Quiet Ocean",
+      "kind": "film",
+      "date": "2026-09-16",
+      "time": null,
+      "annual": false,
+      "datePinned": true,
+      "dateHistory": [
+        {
+          "date": "2026-09-16",
+          "changedAt": 1790157600000,
+          "source": "manual"
+        }
+      ],
+      "done": true,
+      "rating": 4,
+      "verdict": "A good one to remember.",
+      "notes": "",
+      "links": [],
+      "tags": [
+        "movie-night"
+      ],
+      "external": null,
+      "runtimeMin": 110,
+      "series": null,
+      "deletedAt": null,
+      "createdAt": 1790157600000,
+      "updatedAt": 1790157600000
+    },
+    {
+      "id": "slate-demo-6",
+      "title": "Long Way Home",
+      "kind": "game",
+      "date": "2026-09-18",
+      "time": null,
+      "annual": false,
+      "datePinned": true,
+      "dateHistory": [
+        {
+          "date": "2026-09-18",
+          "changedAt": 1790157600000,
+          "source": "manual"
+        }
+      ],
+      "done": true,
+      "rating": 4,
+      "verdict": "A good one to remember.",
+      "notes": "",
+      "links": [],
+      "tags": [
+        "wishlist"
+      ],
+      "external": null,
+      "runtimeMin": null,
+      "series": null,
+      "deletedAt": null,
+      "createdAt": 1790157600000,
+      "updatedAt": 1790157600000
+    },
+    {
+      "id": "slate-demo-7",
+      "title": "Back up my photos",
+      "kind": "task",
+      "date": "2026-09-20",
+      "time": null,
+      "annual": false,
+      "datePinned": true,
+      "dateHistory": [
+        {
+          "date": "2026-09-20",
+          "changedAt": 1790157600000,
+          "source": "manual"
+        }
+      ],
+      "done": true,
+      "rating": 4,
+      "verdict": "A good one to remember.",
+      "notes": "",
+      "links": [],
+      "tags": [],
+      "external": null,
+      "runtimeMin": null,
+      "series": null,
+      "deletedAt": null,
+      "createdAt": 1790157600000,
+      "updatedAt": 1790157600000
+    },
+    {
+      "id": "slate-demo-8",
+      "title": "Northern Lights",
+      "kind": "series",
+      "date": "2026-09-23",
+      "time": "20:00",
+      "annual": false,
+      "datePinned": true,
+      "dateHistory": [
+        {
+          "date": "2026-09-23",
+          "changedAt": 1790157600000,
+          "source": "manual"
+        }
+      ],
+      "done": false,
+      "rating": null,
+      "verdict": "",
+      "notes": "One episode. Phone on silent.",
+      "links": [],
+      "tags": [],
+      "external": null,
+      "runtimeMin": 48,
+      "series": {
+        "season": 1,
+        "episode": 2
+      },
+      "deletedAt": null,
+      "createdAt": 1790157600000,
+      "updatedAt": 1790157600000
+    },
+    {
+      "id": "slate-demo-9",
+      "title": "Book the weekend trip",
+      "kind": "task",
+      "date": "2026-09-23",
+      "time": null,
+      "annual": false,
+      "datePinned": true,
+      "dateHistory": [
+        {
+          "date": "2026-09-23",
+          "changedAt": 1790157600000,
+          "source": "manual"
+        }
+      ],
+      "done": false,
+      "rating": null,
+      "verdict": "",
+      "notes": "",
+      "links": [],
+      "tags": [],
+      "external": null,
+      "runtimeMin": null,
+      "series": null,
+      "deletedAt": null,
+      "createdAt": 1790157600000,
+      "updatedAt": 1790157600000
+    },
+    {
+      "id": "slate-demo-10",
+      "title": "Orbitfall",
+      "kind": "game",
+      "date": "2026-09-25",
+      "time": null,
+      "annual": false,
+      "datePinned": true,
+      "dateHistory": [
+        {
+          "date": "2026-09-25",
+          "changedAt": 1790157600000,
+          "source": "manual"
+        }
+      ],
+      "done": false,
+      "rating": null,
+      "verdict": "",
+      "notes": "",
+      "links": [],
+      "tags": [
+        "wishlist"
+      ],
+      "external": null,
+      "runtimeMin": null,
+      "series": null,
+      "deletedAt": null,
+      "createdAt": 1790157600000,
+      "updatedAt": 1790157600000
+    },
+    {
+      "id": "slate-demo-11",
+      "title": "Rooftop cinema",
+      "kind": "event",
+      "date": "2026-09-26",
+      "time": "19:30",
+      "annual": false,
+      "datePinned": true,
+      "dateHistory": [
+        {
+          "date": "2026-09-26",
+          "changedAt": 1790157600000,
+          "source": "manual"
+        }
+      ],
+      "done": false,
+      "rating": null,
+      "verdict": "",
+      "notes": "",
+      "links": [],
+      "tags": [],
+      "external": null,
+      "runtimeMin": null,
+      "series": null,
+      "deletedAt": null,
+      "createdAt": 1790157600000,
+      "updatedAt": 1790157600000
+    },
+    {
+      "id": "slate-demo-12",
+      "title": "The Last Observatory",
+      "kind": "film",
+      "date": "2026-09-27",
+      "time": null,
+      "annual": false,
+      "datePinned": true,
+      "dateHistory": [
+        {
+          "date": "2026-09-27",
+          "changedAt": 1790157600000,
+          "source": "manual"
+        }
+      ],
+      "done": false,
+      "rating": null,
+      "verdict": "",
+      "notes": "",
+      "links": [],
+      "tags": [
+        "movie-night"
+      ],
+      "external": null,
+      "runtimeMin": 110,
+      "series": null,
+      "deletedAt": null,
+      "createdAt": 1790157600000,
+      "updatedAt": 1790157600000
+    },
+    {
+      "id": "slate-demo-13",
+      "title": "Northern Lights",
+      "kind": "series",
+      "date": "2026-09-30",
+      "time": "20:00",
+      "annual": false,
+      "datePinned": true,
+      "dateHistory": [
+        {
+          "date": "2026-09-30",
+          "changedAt": 1790157600000,
+          "source": "manual"
+        }
+      ],
+      "done": false,
+      "rating": null,
+      "verdict": "",
+      "notes": "One episode. Phone on silent.",
+      "links": [],
+      "tags": [],
+      "external": null,
+      "runtimeMin": 48,
+      "series": {
+        "season": 1,
+        "episode": 3
+      },
+      "deletedAt": null,
+      "createdAt": 1790157600000,
+      "updatedAt": 1790157600000
+    },
+    {
+      "id": "slate-demo-14",
+      "title": "Autumn photo walk",
+      "kind": "event",
+      "date": "2026-10-03",
+      "time": null,
+      "annual": false,
+      "datePinned": true,
+      "dateHistory": [
+        {
+          "date": "2026-10-03",
+          "changedAt": 1790157600000,
+          "source": "manual"
+        }
+      ],
+      "done": false,
+      "rating": null,
+      "verdict": "",
+      "notes": "",
+      "links": [],
+      "tags": [],
+      "external": null,
+      "runtimeMin": null,
+      "series": null,
+      "deletedAt": null,
+      "createdAt": 1790157600000,
+      "updatedAt": 1790157600000
+    },
+    {
+      "id": "slate-demo-15",
+      "title": "Paper Worlds",
+      "kind": "game",
+      "date": "2026-10-06",
+      "time": null,
+      "annual": false,
+      "datePinned": true,
+      "dateHistory": [
+        {
+          "date": "2026-10-06",
+          "changedAt": 1790157600000,
+          "source": "manual"
+        }
+      ],
+      "done": false,
+      "rating": null,
+      "verdict": "",
+      "notes": "",
+      "links": [],
+      "tags": [
+        "wishlist"
+      ],
+      "external": null,
+      "runtimeMin": null,
+      "series": null,
+      "deletedAt": null,
+      "createdAt": 1790157600000,
+      "updatedAt": 1790157600000
+    },
+    {
+      "id": "slate-demo-16",
+      "title": "The Glass Harbour",
+      "kind": "film",
+      "date": null,
+      "time": null,
+      "annual": false,
+      "datePinned": false,
+      "dateHistory": [
+        {
+          "date": null,
+          "changedAt": 1790157600000,
+          "source": "manual"
+        }
+      ],
+      "done": false,
+      "rating": null,
+      "verdict": "",
+      "notes": "",
+      "links": [],
+      "tags": [
+        "movie-night"
+      ],
+      "external": null,
+      "runtimeMin": 110,
+      "series": null,
+      "deletedAt": null,
+      "createdAt": 1790157600000,
+      "updatedAt": 1790157600000
+    },
+    {
+      "id": "slate-demo-17",
+      "title": "Tides of Tomorrow",
+      "kind": "game",
+      "date": null,
+      "time": null,
+      "annual": false,
+      "datePinned": false,
+      "dateHistory": [
+        {
+          "date": null,
+          "changedAt": 1790157600000,
+          "source": "manual"
+        }
+      ],
+      "done": false,
+      "rating": null,
+      "verdict": "",
+      "notes": "",
+      "links": [],
+      "tags": [
+        "wishlist"
+      ],
+      "external": null,
+      "runtimeMin": null,
+      "series": null,
+      "deletedAt": null,
+      "createdAt": 1790157600000,
+      "updatedAt": 1790157600000
+    },
+    {
+      "id": "slate-demo-18",
+      "title": "A small weekend project",
+      "kind": "task",
+      "date": null,
+      "time": null,
+      "annual": false,
+      "datePinned": false,
+      "dateHistory": [
+        {
+          "date": null,
+          "changedAt": 1790157600000,
+          "source": "manual"
+        }
+      ],
+      "done": false,
+      "rating": null,
+      "verdict": "",
+      "notes": "",
+      "links": [],
+      "tags": [],
+      "external": null,
+      "runtimeMin": null,
+      "series": null,
+      "deletedAt": null,
+      "createdAt": 1790157600000,
+      "updatedAt": 1790157600000
+    }
+  ],
+  "dayNotes": [
+    {
+      "date": "2026-09-23",
+      "body": "A little space for the good stuff.\n\nFinish the essentials, then make an evening of it. Looking forward to the next episode and a quiet weekend.",
+      "updatedAt": 1790157600000
+    }
+  ]
+}

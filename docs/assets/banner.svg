@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" role="img" aria-labelledby="title desc">
+  <title id="title">Slate</title><desc id="desc">A home for everything you're looking forward to. Personal release calendar for Windows.</desc>
+  <rect width="1280" height="400" rx="24" fill="#eef0f8"/>
+  <g fill="none" stroke="#cdd1e5"><path d="M834 0v400M958 0v400M1082 0v400M1206 0v400M772 76h508M772 180h508M772 284h508"/></g>
+  <rect x="834" y="180" width="124" height="104" rx="14" fill="#333855"/>
+  <text x="857" y="220" fill="#fff" font-family="Segoe UI,Arial,sans-serif" font-size="26">23</text>
+  <circle cx="860" cy="251" r="5" fill="#a78bfa"/><circle cx="878" cy="251" r="5" fill="#e8b84b"/><circle cx="896" cy="251" r="5" fill="#7dd3fc"/>
+  <rect x="980" y="108" width="177" height="45" rx="10" fill="#fff"/><circle cx="1001" cy="130" r="5" fill="#a78bfa"/><text x="1018" y="136" fill="#343c58" font-family="Segoe UI,Arial,sans-serif" font-size="17">Something good.</text>
+  <rect x="983" y="307" width="230" height="45" rx="10" fill="#fff"/><circle cx="1004" cy="329" r="5" fill="#7dd3fc"/><text x="1021" y="335" fill="#343c58" font-family="Segoe UI,Arial,sans-serif" font-size="17">A little closer every day.</text>
+  <g font-family="Segoe UI,Arial,sans-serif" fill="#252b43"><text x="62" y="100" font-size="34" font-weight="650">slate</text><text x="60" y="190" font-size="49" font-weight="650" letter-spacing="-1.5">Make room for</text><text x="60" y="249" font-size="49" font-weight="650" letter-spacing="-1.5">what you're looking forward to.</text><text x="64" y="324" font-size="20" fill="#59627d">Your releases. Your plans. Your own little calendar.</text></g>
+</svg>

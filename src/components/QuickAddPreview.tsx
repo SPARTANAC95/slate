@@ -35,7 +35,10 @@ export function QuickAddPreview({ parsed }: { parsed: ParsedEntry | null }) {
           ))}
           <span className="ml-auto shrink-0 font-mono text-12 text-text-2">
             {parsed.date ? (
-              format(fromISODate(parsed.date), 'EEE dd.MM.yyyy').toLowerCase()
+              <>
+                {format(fromISODate(parsed.date), 'EEE dd.MM.yyyy').toLowerCase()}
+                {parsed.time && <span className="ml-1.5 text-text">{parsed.time}</span>}
+              </>
             ) : (
               <span className="text-text-3">no date — goes to backlog</span>
             )}

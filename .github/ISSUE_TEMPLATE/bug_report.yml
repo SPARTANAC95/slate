@@ -1,0 +1,17 @@
+name: Bug report
+description: Help improve Slate with a reproducible report.
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Slate version and Windows version
+      placeholder: Slate 0.1.0, Windows 11
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: What happened?
+      description: Include steps to reproduce, what you expected, and what happened instead. Do not include API keys, OAuth credentials, or private calendar exports.
+    validations:
+      required: true

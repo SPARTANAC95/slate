@@ -1,6 +1,8 @@
 import { db } from './index';
 import { dumpAll, type BackupFile } from './backup';
 import { todayISO } from '../lib/dates';
+import { isTauri, readBackup } from '../lib/platform';
+import { revealPath, saveExport } from '../lib/desktop';
 import type { DayNote, Entry } from '../types';
 import { mergeHistory, normalizeEntry, normalizeNote } from './normalize';
 
@@ -69,14 +71,52 @@ export async function applyImport(plan: ImportPlan): Promise<void> {
   });
 }
 
-/** one JSON file of everything — the same shape the on-disk backup uses */
-export async function exportToFile(): Promise<void> {
-  const blob = new Blob([JSON.stringify(await dumpAll(), null, 2)], {
-    type: 'application/json',
-  });
+/**
+ * An empty database next to a disk backup that is not: a wiped webview
+ * profile, a fresh machine with the data folder copied over. The mirror was
+ * written for exactly this moment, so offer it back rather than leaving the
+ * calendar blank until someone remembers where the file lives. Null means
+ * there is nothing to offer — the database has rows, or the disk has none.
+ */
+export async function planRestoreFromDisk(): Promise<ImportPlan | null> {
+  const [entries, notes] = await Promise.all([db.entries.count(), db.dayNotes.count()]);
+  if (entries + notes > 0) return null;
+  const raw = await readBackup();
+  if (!raw) return null;
+  try {
+    const plan = await planImport(JSON.parse(raw));
+    return plan && plan.addEntries.length + plan.addNotes.length > 0 ? plan : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * One JSON file of everything — the same shape the on-disk backup uses. In
+ * the desktop app it is written into Downloads by the rust side and shown in
+ * Explorer, and the path comes back; the browser downloads it itself and
+ * returns null.
+ */
+export async function exportToFile(): Promise<string | null> {
+  const json = JSON.stringify(await dumpAll(), null, 2);
+  if (isTauri()) {
+    const path = await saveExport(json);
+    if (!path) throw new Error('export was not written');
+    void revealPath(path);
+    return path;
+  }
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
+  a.href = url;
   a.download = `slate-export-${todayISO()}.json`;
+  // in the document so the click counts, and revoked a beat later: a click
+  // only *queues* the download, so tearing the url down in the same tick can
+  // cancel it — and an export that never lands reports no error at all
+  a.style.display = 'none';
+  document.body.append(a);
   a.click();
-  URL.revokeObjectURL(a.href);
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  return null;
 }

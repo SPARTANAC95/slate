@@ -7,12 +7,14 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/api': 'http://localhost:8787',
+      '/api': 'http://127.0.0.1:8787',
     },
   },
   test: {
     globals: true,
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    // the proxy's provider code is plain js, but its date parsing still needs
+    // pinning down — steam publishes release dates as prose
+    include: ['src/**/*.test.ts', 'server/**/*.test.js'],
   },
 });

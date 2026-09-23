@@ -73,6 +73,7 @@ export function DayCell({ day, iso, inMonth, entries, selected, onSelect }: Prop
           } ${e.done ? 'line-through opacity-60' : ''}`}
         >
           <KindDot kind={e.kind} />
+          {e.time && <span className="shrink-0 font-mono tabular-nums">{e.time}</span>}
           <span className="truncate">{e.title}</span>
         </span>
       ))}

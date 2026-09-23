@@ -1,5 +1,5 @@
 import type { Entry } from '../types';
-import { railItems } from '../lib/rail';
+import { countdownLabel, railItems } from '../lib/rail';
 import { KindDot } from './KindDot';
 import { Poster } from './Poster';
 
@@ -9,17 +9,15 @@ type Props = {
 };
 
 function Count({ days }: { days: number }) {
+  const label = countdownLabel(days);
+  // a word gets said quietly; a number gets to be the big thing on the card
   if (days === 0 || days === 1) {
     return (
-      <span className="font-mono text-18 uppercase tracking-[-0.01em] text-text">
-        {days === 0 ? 'today' : 'tomorrow'}
-      </span>
+      <span className="font-mono text-18 uppercase tracking-[-0.01em] text-text">{label}</span>
     );
   }
   return (
-    <span className="font-mono text-32 leading-none tracking-[-0.02em] text-text">
-      {days < 0 ? `−${-days}` : days}
-    </span>
+    <span className="font-mono text-32 leading-none tracking-[-0.02em] text-text">{label}</span>
   );
 }
 
@@ -48,6 +46,11 @@ export function CountdownRail({ entries, onJump }: Props) {
             </span>
             <span className="flex w-full min-w-0 items-center gap-1.5">
               <KindDot kind={entry.kind} />
+              {entry.time && (
+                <span className="shrink-0 font-mono text-11 tabular-nums text-text-2">
+                  {entry.time}
+                </span>
+              )}
               <span className="truncate text-12 text-text-2">{entry.title}</span>
               {entry.series && (
                 <span className="shrink-0 font-mono text-11 text-text-3">

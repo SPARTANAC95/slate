@@ -44,7 +44,7 @@ export function EntryItems({
             </span>
           ))}
           <span className="shrink-0 font-mono text-11 text-text-3">
-            {e.date ? pretty(e.date) : 'backlog'}
+            {e.date ? `${pretty(e.date)}${e.time ? ` ${e.time}` : ''}` : 'backlog'}
           </span>
         </Command.Item>
       ))}

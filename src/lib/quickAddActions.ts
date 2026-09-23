@@ -8,6 +8,7 @@ export async function addParsed(parsed: ParsedEntry): Promise<string | null> {
     title: parsed.title,
     kind: parsed.kind,
     date: parsed.date,
+    time: parsed.time,
     annual: parsed.annual,
     series: parsed.series,
     tags: parsed.tags,
@@ -57,6 +58,7 @@ export async function addFromResult(
     title: r.title,
     kind: r.kind,
     date,
+    time: parsed.time,
     annual: parsed.annual,
     series: parsed.series,
     tags: parsed.tags,
@@ -65,4 +67,28 @@ export async function addFromResult(
     dateSource: date && !parsed.date ? 'api' : 'manual',
   });
   return date;
+}
+
+/**
+ * Borrow only the cover art. My title, my date, my plan — the result is
+ * used for its poster and nothing else, so the provider never renames the
+ * entry and the refresh never moves it.
+ */
+export async function addArtOnly(
+  parsed: ParsedEntry,
+  r: LookupResult,
+): Promise<string | null> {
+  await addEntry({
+    title: parsed.title,
+    // a kind I typed wins; otherwise the result knows better than "note"
+    kind: parsed.kindSource === 'default' ? r.kind : parsed.kind,
+    date: parsed.date,
+    time: parsed.time,
+    annual: parsed.annual,
+    series: parsed.series,
+    tags: parsed.tags,
+    external: { source: r.source, id: r.id, posterUrl: r.posterUrl },
+    datePinned: true,
+  });
+  return parsed.date;
 }

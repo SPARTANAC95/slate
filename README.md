@@ -1,109 +1,115 @@
-# slate
+<div align="center">
 
-Single-user personal calendar: what's coming (game / film / series releases, events), and what I thought of it after. Local-only — data lives in the browser (IndexedDB), exportable to JSON.
+<img src="docs/assets/banner.svg" alt="Slate — a home for everything you are looking forward to" width="100%">
 
-slate runs two ways from one codebase:
+**A personal Windows calendar for releases, plans, and the memories you make along the way.**
 
-- **Windows app** (recommended) — its own window, taskbar icon, tray, and toast reminders. No terminal, no browser.
-- **Browser + dev server** — for development.
+[Download for Windows](https://github.com/SPARTANAC95/slate/releases/latest) · [Visit the website](https://spartanac95.github.io/slate/) · [User guide](docs/USER-GUIDE.md) · [Build from source](docs/DEVELOPMENT.md)
 
-## Launching it
+[![Checks](https://github.com/SPARTANAC95/slate/actions/workflows/checks.yml/badge.svg)](https://github.com/SPARTANAC95/slate/actions/workflows/checks.yml)
+![Windows x64](https://img.shields.io/badge/Windows-x64-8096d9?style=flat-square)
+![Local first](https://img.shields.io/badge/storage-local_first-a3a2dd?style=flat-square)
+![Tauri 2](https://img.shields.io/badge/built_with-Tauri_2-81cbd5?style=flat-square)
 
-Double-click **Slate** on the Desktop, or search "Slate" in the Start Menu — right-click it there to pin it to the taskbar. `slate.cmd` in this folder does the same from a terminal, and builds the app first if it has never been built.
+</div>
 
-To recreate the shortcuts on a new machine, or after moving the project:
+![Slate month view with countdowns, scheduled entries, and a daily note](docs/assets/calendar.png)
 
-```
-powershell -File tools/New-Shortcuts.ps1
-powershell -File tools/New-Shortcuts.ps1 -Remove   # undo
-```
+Slate brings the game you are waiting for, your next film night, weekly episodes, and everyday plans into one quiet calendar. Add an idea in a sentence, give it a day when you are ready, and keep a small record of what you enjoyed.
 
-There is also a real installer at `src-tauri/target/release/bundle/nsis/Slate_0.1.0_x64-setup.exe` if you would rather install it properly — that adds a Windows uninstall entry.
+Your calendar lives on your computer. Core planning works without an account or API keys. Online metadata and Google Calendar are optional.
 
-## Building the Windows app
+## What you can do
 
-```
-npm install
-npm run dev:app      # run with hot reload
-npm run build:app    # rebuild the exe and the installer
-```
+| Before it happens | When you make time | Afterward |
+| --- | --- | --- |
+| Track games, films, series, events, tasks, and notes | See your month or a chronological upcoming list | Mark an entry done |
+| Search release metadata and cover art | Move an idea from the backlog onto a date | Give it a rating and a short verdict |
+| Follow release changes and their history | Get morning and timed Windows reminders | Look back through the year view |
+| Keep your own date pinned | Let **Pick for me** help choose from your backlog | Write a note for the day |
 
-Needs Rust (`rustup`) and the MSVC build tools. API keys go in the app itself: `ctrl k` → `preferences`.
+### One sentence is enough
 
-## Setup — browser
-
-```
-npm install
-copy .env.example .env    # TMDB / RAWG keys
-npm run dev               # vite (:5173) + API proxy (:8787)
-```
-
-Target: Chrome on desktop, ≥900px wide.
-
-## Status
-
-- **M1 — calendar and entries: done.** Monday-first month grid, day panel with inline entry add/edit/delete (incl. links and notes per entry), per-day note with debounced autosave, soft delete (30-day retention), date changes append to `dateHistory`.
-- **On-device safety:** the app requests persistent storage (no browser eviction) and mirrors the whole database to `data/slate-backup.json` on every change (2s debounce + a beacon on tab close) while the dev server runs. Previous versions rotate into `data/history/` (last 20), so an empty browser profile can never destroy the only good backup. The file uses the same shape the M6 export/import will use.
-- **M2 — quick add with date parsing: done.** One line at the top parses title, kind, date, series (`s3e4`), `every year`, and `#kind`/`#tag` tags from anywhere in the string, with a live preview before Enter. Understands `tomorrow/sutra/danas/veceras/prekosutra`, weekdays in English and Bosnian (`friday`/`petak`), `19.11.` (rolls to the next year that hasn't passed), `dec 18 2026`/`18 dec`, `in 3 days`/`za 3 dana` (implies task), ISO dates. No date → backlog, and the preview says so. Adding a dated entry jumps the view to it. Parser is fully unit-tested.
-- **M3 — metadata lookup and delay tracking: done.** Typing in quick add searches TMDB (films, series) and RAWG (games) through the proxy, 300ms debounced, up to 5 results with year and poster; arrow keys + Enter to pick. Picking fills title, kind, date, and poster; a typed date always wins, and `sNeM` series pull the exact episode air date. `Refresh dates` (header) re-checks every non-done API-linked entry — automatically once per day on open. A moved date appends to `dateHistory` and the row shows the trail: original struck through, every later date, `delayed 2×, 208 days total`. No keys / dead network degrades silently to manual entry.
-- **M4 — countdown rail and backlog: done.** The rail above the grid shows the next 6 dated entries as big monospace day counts (`TODAY` and `TOMORROW` are words); past-but-not-done entries sit at the front on an elevated card with a negative count. Clicking a card jumps to its day. The `backlog N` toggle (header, left) opens a column of everything undated — drag a row onto any day cell to schedule it, or edit it inline for the keyboard path. `Pick for me` rolls a die over the backlog filtered by kind and rough time (`~30min` → series/task/note, `an evening` → film/series, `a weekend` → game), with re-roll and one-click `Schedule today`/`tomorrow`.
-- **M5 — the log: done.** Entries whose date has passed get a `Mark done` action in the row; done reveals five rating squares (click again to clear) and a one-line verdict that saves on blur or Enter. The `year` toggle shows twelve columns of day squares, intensity by how much was logged that day, monochrome; hover shows the day's titles, click jumps to the day. Squares scale up on 2K/4K screens.
-- **M6 — command palette, data, polish: done.** `ctrl k` opens the palette: search titles, type a date to jump (`19.11.`, `friday`, `sutra` all work), create entries, toggle year view, export, import, restore deleted (30-day window). Keyboard shortcuts throughout, with a `?` sheet. Export downloads one JSON file; import shows a diff summary (`+N new · M updated · K unchanged`, newest `updatedAt` wins) before committing. Thin dark scrollbars for Windows Chrome.
-
-## Saving
-
-There is no save button anywhere, and nothing is ever staged. Adding, editing, scheduling, deleting, rating and marking done write to the database the moment you act. The two free-text fields — the day note and the one-line verdict — commit 500ms after you stop typing, and also on blur, on switching day or entry, and whenever the window is hidden or closed, so quitting to the tray mid-sentence keeps what you wrote.
-
-On top of that the whole database is mirrored to a JSON file on disk two seconds after any change, with the previous twenty versions kept beside it.
-
-## Reminders
-
-The desktop app nudges you once a day about whatever is scheduled, as a Windows toast. Closing the window leaves slate in the tray so the reminder still arrives; quit properly from the tray menu. Turn reminders off, or enable start-with-Windows, in `ctrl k` → `preferences`.
-
-## API keys
-
-Both are free. In the desktop app they live in `ctrl k` → `preferences`. In the browser they go in `.env` (copy `.env.example`), then restart `npm run dev`:
-
-- `TMDB_API_KEY` — create an account at themoviedb.org → Settings → API. Either the classic v3 key or the "API Read Access Token" works.
-- `RAWG_API_KEY` — register at rawg.io/apidocs. Free tier: 20,000 requests/month (the proxy caches for an hour to stay well under).
-
-Without keys the app works fully — you just type dates yourself.
-
-This product uses the TMDB API but is not endorsed or certified by TMDB. Game data by RAWG.
-
-## Keyboard shortcuts
-
-| key | action |
-|---|---|
-| `ctrl k` | command palette |
-| `n` | focus quick add |
-| `/` | search (palette) |
-| `←` `→` | previous / next day |
-| `↑` `↓` | previous / next week |
-| `shift` `←` `→` | previous / next month (year in year view) |
-| `t` | today |
-| `y` | year view |
-| `b` | backlog |
-| `?` | shortcut sheet |
-| `esc` | close whatever is open |
-
-## Export format
-
-One JSON file: `{ version: 1, exportedAt, entries: Entry[], dayNotes: DayNote[] }` — field shapes in `src/types.ts`. The automatic on-disk backup (`data/slate-backup.json`) uses the identical shape, so a backup is also a valid import. Import merges by id; for each id the newer `updatedAt` wins, and a diff summary is shown before anything is written.
-
-## Tests
-
-```
-npm test    # 78 tests: parser, date math, rail order, search, runtime, import normalization
+```text
+#event cinema tomorrow 20:00
+#task book tickets in 3 days
+#film The Glass Harbour
+anniversary 4.7. every year
 ```
 
-## Beyond the original six milestones
+Slate previews what it understood before you press **Enter**. An entry without a date goes into your backlog. English and Bosnian/Serbian/Croatian date words such as `tomorrow`, `sutra`, and `petak` are supported.
 
-- **Poster art** on entry rows and countdown cards, from whichever provider matched.
-- **Tags** render on entries and are searchable in the palette (`#hype`, or `#scifi dune` to narrow by both).
-- **Whole-season add** — type `Silo s3` (no episode), pick the show, and every dated episode of that season is added at once with its own air date and runtime.
-- **Real runtimes** — `Pick for me` filters by actual TMDB runtime / RAWG playtime instead of guessing from kind, and rows show the length.
-- **Full keyboard reach** — arrows walk days and weeks across month boundaries, shift+arrows jump months.
-- **Year view shows scheduled entries too**, dimmer than logged ones, so an unlogged year is not an empty grid.
-- **Backup status** in the header — if the disk mirror is not running, it says so instead of failing silently.
-- **Error boundary** — a render crash offers an export rather than a white screen.
+![Quick add showing the parsed title, date, time, and kind](docs/assets/quick-add.png)
+
+### See what is next
+
+Countdowns keep the nearest plans visible. The upcoming view puts all unfinished entries in order, including a separate section for ideas without a date.
+
+![Slate upcoming view with countdowns and an undated backlog](docs/assets/upcoming.png)
+
+<sub>Real screenshots of Slate's shared UI in an isolated browser session. Titles, plans, and dates are fictional examples. The backup endpoint was simulated for the screenshots; no personal calendar data is shown.</sub>
+
+## Get started in a minute
+
+1. Download **`Slate_0.1.0_x64-setup.exe`** from [Releases](https://github.com/SPARTANAC95/slate/releases/latest) and install it on Windows 10/11, x64.
+2. Open **Slate** from the Start menu. Type `#event cinema tomorrow 20:00` and press **Enter**.
+3. Click any day to edit entries or write a daily note. Press **Ctrl+K** for search, preferences, import, and export.
+
+The current installer is unsigned, so Windows may show an unknown-publisher prompt. Check that your file came from this repository's Releases page; each release includes a SHA-256 checksum.
+
+Closing the window keeps Slate in the system tray. Use **Quit** in the tray menu to exit completely. Reminders and Google sync require Slate to remain running.
+
+## Your calendar stays yours
+
+- **Autosave:** entries save as you work; notes and verdicts save after a short pause and on blur.
+- **Disk backups:** the app keeps a local JSON mirror and rotating history. Export a separate copy before moving computers or making large changes.
+- **Import with a preview:** Slate shows what will be added or updated. Matching IDs merge using the newer timestamp.
+- **Recover deleted entries:** restore through the command palette during the normal 30-day recovery window.
+- **Optional connections:** TMDB for films/series, IGDB or Steam for games, and one-way **Slate → Google Calendar** sync on Windows.
+
+Metadata lookups and artwork contact their providers. Enabling Google sync sends dated entry titles, notes, links, and related event details to the calendar you choose. [Read the data and backup guide](docs/USER-GUIDE.md#data-and-backups) and [Google setup guide](docs/GOOGLE-CALENDAR.md).
+
+## A few shortcuts worth knowing
+
+| Key | Action |
+| --- | --- |
+| **Ctrl+K** / **/** | Open the command palette |
+| **N** | Focus quick add |
+| **T** | Go to today |
+| **B** | Toggle backlog |
+| **U** / **Y** | Upcoming / year view |
+| **Arrow keys** | Move between days and weeks |
+| **Shift+← / Shift+→** | Previous / next month |
+| **?** | Show all shortcuts |
+
+Shortcuts work when you are not typing into a field. [Full usage guide](docs/USER-GUIDE.md).
+
+## For developers
+
+React 18 + TypeScript + Vite, with Dexie/IndexedDB for local data and Tauri 2 + Rust for the Windows app. The browser development mode uses a loopback Express server for metadata and disk backups.
+
+```sh
+git clone https://github.com/SPARTANAC95/slate.git
+cd slate
+npm ci
+npm run dev
+```
+
+Open `http://localhost:5173`. Node.js 22.12+ is required. Optional metadata keys are documented in `.env.example`; manual planning works without them.
+
+```sh
+npm test              # JavaScript and TypeScript tests
+npm run build         # TypeScript check + production web build
+npm run dev:app       # Native development; Windows prerequisites required
+npm run build:app     # Windows executable + NSIS installer
+```
+
+Run `cargo test --locked --lib` inside `src-tauri` for the native tests. [Developer setup, architecture, and packaging](docs/DEVELOPMENT.md) · [Contributing](CONTRIBUTING.md).
+
+**Current scope:** Windows x64 desktop. Browser mode is for local development; the GitHub Pages website is a product guide, not an online calendar. macOS/Linux packages and two-way calendar sync are not provided.
+
+## Credits and source use
+
+Created by [SPARTANAC95](https://github.com/SPARTANAC95). This product uses the TMDB API but is not endorsed or certified by TMDB. Optional game metadata comes from IGDB and the Steam store. Provider artwork remains the property of its respective owners.
+
+No open-source license has been granted for Slate's source code. Third-party dependencies retain their own licenses. For bugs and ideas, [open an issue](https://github.com/SPARTANAC95/slate/issues).

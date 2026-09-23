@@ -2,9 +2,8 @@
 name = "slate"
 version = "0.1.0"
 description = "Personal release calendar"
-authors = ["spartanac"]
-license = ""
-repository = ""
+authors = ["SPARTANAC95"]
+repository = "https://github.com/SPARTANAC95/slate"
 edition = "2021"
 rust-version = "1.77.2"
 
@@ -24,12 +23,21 @@ tauri-plugin-log = "2"
 tauri-plugin-notification = "2"
 tauri-plugin-opener = "2"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
-tokio = { version = "1", features = ["time"] }
+tokio = { version = "1", features = ["time", "macros", "net", "io-util", "sync"] }
+base64 = "0.22"
+sha2 = "0.10"
+rand = "0.9"
+# join_all, for the handful of per-game calls steam needs; already in the tree
+# by way of reqwest, so declaring it costs no extra build
+futures-util = "0.3"
 chrono = "0.4"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-autostart = "2"
 tauri-plugin-single-instance = "2"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_Security_Cryptography", "Win32_Foundation"] }
 
 [profile.release]
 codegen-units = 1

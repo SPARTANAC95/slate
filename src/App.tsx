@@ -3,10 +3,17 @@ import { addDays } from 'date-fns';
 import { purgeExpiredDeleted } from './db';
 import { requestPersistentStorage, startBackups, type BackupStatus } from './db/backup';
 import { markRefreshed, refreshExternalDates, shouldAutoRefresh } from './db/refresh';
-import { applyImport, exportToFile, planImport, type ImportPlan } from './db/transfer';
+import {
+  applyImport,
+  exportToFile,
+  planImport,
+  planRestoreFromDisk,
+  type ImportPlan,
+} from './db/transfer';
 import { useLiveEntries } from './db/hooks';
 import { fromISODate, toISODate, todayISO } from './lib/dates';
 import { useShortcuts } from './lib/useShortcuts';
+import { useToday } from './lib/useToday';
 import { startNotifications } from './lib/notify';
 import { Header } from './components/Header';
 import { MonthGrid } from './components/MonthGrid';
@@ -15,29 +22,40 @@ import { QuickAdd } from './components/QuickAdd';
 import { CountdownRail } from './components/CountdownRail';
 import { Backlog } from './components/Backlog';
 import { YearView } from './components/YearView';
+import { UpcomingView } from './components/UpcomingView';
 import { CommandPalette } from './components/CommandPalette';
 import { HelpSheet } from './components/HelpSheet';
 import { ImportDialog } from './components/ImportDialog';
 import { Preferences } from './components/Preferences';
+import { startGoogleSync } from './db/googleSync';
 
 export default function App() {
   const now = new Date();
   const [cursor, setCursor] = useState({ year: now.getFullYear(), month: now.getMonth() });
   const [direction, setDirection] = useState<'next' | 'prev' | null>(null);
   const [selected, setSelected] = useState<string>(todayISO());
-  const [view, setView] = useState<'month' | 'year'>('month');
+  const [view, setView] = useState<'month' | 'year' | 'upcoming'>('month');
   const [yearCursor, setYearCursor] = useState(now.getFullYear());
   const [showBacklog, setShowBacklog] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [prefsOpen, setPrefsOpen] = useState(false);
-  const [importState, setImportState] = useState<{ plan: ImportPlan; fileName: string } | null>(
-    null,
-  );
+  const [importState, setImportState] = useState<{
+    plan: ImportPlan;
+    fileName: string;
+    /** offered by the app from the disk mirror, not picked by the user */
+    restore?: boolean;
+  } | null>(null);
+  const restoreOffered = useRef(false);
   const [note, setNote] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [backup, setBackup] = useState<BackupStatus>({ state: 'idle' });
   const fileRef = useRef<HTMLInputElement>(null);
   const noteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const refreshingRef = useRef(false);
+  // moves at midnight, so a window left open overnight wakes up on the right day
+  const today = useToday();
+  const lastToday = useRef(today);
   // undefined until indexeddb opens — "loading" and "empty" are different
   const loaded = useLiveEntries();
   const entries = loaded ?? [];
@@ -50,33 +68,80 @@ export default function App() {
   };
 
   const runRefresh = async () => {
+    // one at a time; a second click mid-check would race the first
+    if (refreshingRef.current) return;
+    refreshingRef.current = true;
+    setRefreshing(true);
+    // a plain note, not a flash: an earlier flash's timer used to clear
+    // "checking…" halfway through, which also re-enabled the button
+    if (noteTimer.current) clearTimeout(noteTimer.current);
     setNote('checking…');
     try {
-      const { checked, moved } = await refreshExternalDates();
+      const { checked, answered, moved, kept } = await refreshExternalDates();
+      if (checked > 0 && answered === 0) {
+        // nobody answered — say so, and leave today unmarked so the next
+        // open tries again instead of "checked 12 — 0 moved" from an unplugged cable
+        flash('could not reach the providers — dates unchanged');
+        return;
+      }
       markRefreshed();
-      flash(checked === 0 ? 'nothing to refresh' : `checked ${checked} — ${moved} moved`);
+      // "kept" is the reassurance that a date I chose survived the check
+      const keptNote = kept > 0 ? `, ${kept} kept my date` : '';
+      const count = answered < checked ? `${answered} of ${checked}` : String(checked);
+      flash(checked === 0 ? 'nothing to refresh' : `checked ${count} — ${moved} moved${keptNote}`);
     } catch {
       // never leave the header stuck on "checking…" — that also wedges the button
       flash('refresh failed — dates are unchanged');
+    } finally {
+      refreshingRef.current = false;
+      setRefreshing(false);
     }
   };
 
   useEffect(() => {
-    purgeExpiredDeleted();
     requestPersistentStorage();
-    if (shouldAutoRefresh()) runRefresh(); // once per day on open
     // focus quick add once on open — later, `n` brings it back without
     // stealing focus from single-letter shortcuts on view switches
     document.getElementById('quick-add')?.focus();
     const stopBackups = startBackups(setBackup);
     const stopNotifications = startNotifications();
+    const stopGoogleSync = startGoogleSync();
     return () => {
       stopBackups();
       stopNotifications();
+      stopGoogleSync();
       if (noteTimer.current) clearTimeout(noteTimer.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // an empty database with a disk backup beside it gets offered the backup,
+  // once, as soon as we know the database really is empty rather than loading
+  useEffect(() => {
+    if (loaded === undefined || restoreOffered.current) return;
+    restoreOffered.current = true;
+    planRestoreFromDisk().then((plan) => {
+      if (plan) setImportState({ plan, fileName: 'slate-backup.json', restore: true });
+    });
+  }, [loaded]);
+
+  // the once-a-day jobs: on open, and again each time a running window
+  // crosses midnight — the tray app is never reopened, so "on open" alone
+  // meant a refresh that ran once and a purge that never did
+  useEffect(() => {
+    purgeExpiredDeleted();
+    if (shouldAutoRefresh()) runRefresh();
+    // a selection left on "today" overnight follows the day; one parked on
+    // some other date was a choice and stays put
+    if (lastToday.current !== today) {
+      const wasOnToday = selected === lastToday.current;
+      lastToday.current = today;
+      if (wasOnToday) {
+        setSelected(today);
+        showMonthOf(today); // a month boundary at midnight would otherwise hide it
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [today]);
 
   const showMonthOf = (date: string) => {
     const d = fromISODate(date);
@@ -87,8 +152,9 @@ export default function App() {
     );
   };
 
-  /** whole pages: months in month view, years in year view */
+  /** whole pages: months in month view, years in year view, nothing in a list */
   const movePage = (delta: -1 | 1) => {
+    if (view === 'upcoming') return;
     if (view === 'year') return setYearCursor((y) => y + delta);
     setDirection(delta === 1 ? 'next' : 'prev');
     setCursor(({ year, month }) => {
@@ -99,6 +165,7 @@ export default function App() {
 
   /** walk the selection by days; the grid follows across month boundaries */
   const moveDay = (delta: number) => {
+    if (view === 'upcoming') return;
     if (view === 'year') return setYearCursor((y) => y + (delta > 0 ? 1 : -1));
     const next = toISODate(addDays(fromISODate(selected), delta));
     setDirection(delta > 0 ? 'next' : 'prev');
@@ -116,6 +183,7 @@ export default function App() {
 
   const goToday = () => jumpTo(todayISO());
   const toggleYear = () => setView((v) => (v === 'year' ? 'month' : 'year'));
+  const toggleUpcoming = () => setView((v) => (v === 'upcoming' ? 'month' : 'upcoming'));
 
   const onFilePicked = async (file: File) => {
     try {
@@ -134,8 +202,10 @@ export default function App() {
     moveDay,
     today: goToday,
     year: toggleYear,
+    upcoming: toggleUpcoming,
     backlog: () => setShowBacklog((v) => !v),
     help: () => setHelpOpen((v) => !v),
+    blocked: () => helpOpen || prefsOpen || importState !== null,
     escape: () => {
       if (importState) return setImportState(null), true;
       if (prefsOpen) return setPrefsOpen(false), true;
@@ -149,23 +219,27 @@ export default function App() {
   return (
     <div className="flex h-full flex-col overflow-hidden">
       <Header
+        onPreferences={() => setPrefsOpen(true)}
         view={view}
         cursor={cursor}
         yearCursor={yearCursor}
         showBacklog={showBacklog}
         backlogCount={backlogCount}
         note={note}
-        refreshBusy={note === 'checking…'}
+        refreshBusy={refreshing}
         backup={backup}
         onMove={movePage}
         onToday={goToday}
         onRefresh={runRefresh}
         onToggleBacklog={() => setShowBacklog((v) => !v)}
         onToggleYear={toggleYear}
+        onToggleUpcoming={toggleUpcoming}
       />
 
       <div className="flex min-h-0 flex-1 gap-5 px-7 pb-6">
-        {view === 'year' ? (
+        {view === 'upcoming' ? (
+          <UpcomingView entries={entries} onJumpToDay={jumpTo} />
+        ) : view === 'year' ? (
           <YearView entries={entries} year={yearCursor} onJumpToDay={jumpTo} />
         ) : (
           <>
@@ -203,9 +277,10 @@ export default function App() {
         entries={entries}
         onJump={jumpTo}
         onToggleYear={toggleYear}
+        onToggleUpcoming={toggleUpcoming}
         onExport={() => {
           exportToFile().then(
-            () => flash('exported'),
+            (path) => flash(path ? 'exported to downloads' : 'exported'),
             () => flash('export failed — nothing was written'),
           );
         }}
@@ -219,10 +294,11 @@ export default function App() {
         <ImportDialog
           plan={importState.plan}
           fileName={importState.fileName}
+          restore={importState.restore}
           onConfirm={async () => {
             try {
               await applyImport(importState.plan);
-              flash('imported');
+              flash(importState.restore ? 'restored from the disk backup' : 'imported');
             } catch {
               flash('import failed — nothing was changed');
             } finally {

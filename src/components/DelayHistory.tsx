@@ -21,7 +21,9 @@ export function DelayHistory({ entry }: { entry: Entry }) {
       <span className="text-text-3 line-through">{fmt(first)}</span>
       {dated.slice(1).map((h, i) => (
         <span
-          key={h.changedAt}
+          // two writes inside one millisecond share a changedAt, so the index
+          // has to come along or react sees duplicate keys
+          key={`${h.changedAt}:${i}`}
           className={i === dated.length - 2 ? 'text-text-2' : 'text-text-3 line-through'}
         >
           → {fmt(h.date!)}

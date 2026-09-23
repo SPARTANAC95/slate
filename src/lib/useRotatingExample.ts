@@ -8,6 +8,8 @@ const EXAMPLES = [
   'renew passport in 5 days',
   'anniversary 4.7. every year',
   '#film premiere dec 18 2026',
+  'match tomorrow 20:45',
+  '#event dinner friday at 8pm',
 ];
 
 /** cycles the placeholder example with a short fade between swaps */

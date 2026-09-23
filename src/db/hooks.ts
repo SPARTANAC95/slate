@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from './index';
 import type { DayNote, Entry } from '../types';
 import { occursOn } from '../lib/dates';
+import { byTimeThenAdded } from '../lib/order';
 
 /** all live (non-deleted) entries; single-user scale, filter in memory */
 export function useLiveEntries(): Entry[] | undefined {
@@ -11,9 +12,7 @@ export function useLiveEntries(): Entry[] | undefined {
 }
 
 export function entriesOnDay(entries: Entry[], dayISO: string): Entry[] {
-  return entries
-    .filter((e) => occursOn(e.date, e.annual, dayISO))
-    .sort((a, b) => a.createdAt - b.createdAt);
+  return entries.filter((e) => occursOn(e.date, e.annual, dayISO)).sort(byTimeThenAdded);
 }
 
 /**

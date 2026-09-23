@@ -1,6 +1,7 @@
 import { liveQuery } from 'dexie';
 import { db } from './index';
 import { isTauri, writeBackup } from '../lib/platform';
+import { onWindowGoingAway } from '../lib/lifecycle';
 import type { DayNote, Entry } from '../types';
 
 /** same shape the export/import uses — a backup file is a valid import */
@@ -71,21 +72,23 @@ export function startBackups(onStatus: (s: BackupStatus) => void): () => void {
     error: () => onStatus({ state: 'unavailable' }),
   });
 
-  const onPageHide = () => {
-    // a debounce is still waiting — get the current snapshot out synchronously
+  const onGoingAway = () => {
+    // a debounce is still waiting — get the current snapshot out now
     if (!timer || pending === null) return;
+    clearTimeout(timer);
+    timer = null;
     if (isTauri()) {
       void writeBackup(pending);
     } else {
       navigator.sendBeacon?.('/api/backup', new Blob([pending], { type: 'application/json' }));
     }
   };
-  addEventListener('pagehide', onPageHide);
+  const stopListening = onWindowGoingAway(onGoingAway);
 
   return () => {
     disposed = true;
     sub.unsubscribe();
-    removeEventListener('pagehide', onPageHide);
+    stopListening();
     if (timer) clearTimeout(timer);
   };
 }

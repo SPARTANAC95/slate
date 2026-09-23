@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import type { EntryKind } from '../types';
+import type { EntryKind, ExternalSource, LIVE_SOURCES } from '../types';
 import { apiGet } from './platform';
 
 export type LookupResult = {
-  source: 'tmdb' | 'rawg';
+  /** a search only ever comes back from a provider that still answers */
+  source: (typeof LIVE_SOURCES)[number];
   kind: 'film' | 'series' | 'game';
   id: string;
   title: string;
@@ -36,7 +37,8 @@ export async function searchMetadata(q: string, kinds: EntryKind[]): Promise<Loo
 
 /** current date + runtime for one linked entry */
 export async function fetchDetails(args: {
-  source: 'tmdb' | 'rawg';
+  /** a retired provider is asked for and answers nothing, which is fine */
+  source: ExternalSource;
   kind: EntryKind;
   id: string;
   season?: number;
@@ -80,5 +82,11 @@ export function useMetadataSearch(query: string, kinds: EntryKind[], enabled: bo
     return () => clearTimeout(timer);
   }, [query, kindsKey, enabled]);
 
-  return { results, clear: () => setResults([]) };
+  // clearing also retires any request still in flight — otherwise a search
+  // that was answered a moment after escape would put the dropdown back
+  const clear = () => {
+    runId.current++;
+    setResults([]);
+  };
+  return { results, clear };
 }

@@ -1,6 +1,11 @@
 import { isTauri } from './platform';
 
-export type ApiKeys = { tmdb: string; rawg: string };
+/** igdb authenticates as a twitch app, so games take two halves, not one key */
+export type ApiKeys = { tmdb: string; igdbId: string; igdbSecret: string };
+
+/** what each provider did when called with the stored key */
+export type KeyStatus = 'ok' | 'missing' | 'rejected' | 'down' | 'error' | 'unreachable';
+export type KeyCheck = { tmdb: KeyStatus; igdb: KeyStatus; steam: KeyStatus };
 
 const invoke = async <T>(cmd: string, args?: Record<string, unknown>): Promise<T | null> => {
   if (!isTauri()) return null;
@@ -19,15 +24,39 @@ export const setApiKeys = (keys: ApiKeys): Promise<unknown> => invoke('set_api_k
 
 export const backupLocation = (): Promise<string | null> => invoke<string>('backup_location');
 
-export async function revealBackup(): Promise<void> {
-  const path = await backupLocation();
-  if (!path) return;
+/**
+ * Ask every provider whether its key works. The desktop app holds its own
+ * keys; in the browser the proxy answers from .env.
+ */
+export async function checkApiKeys(): Promise<KeyCheck | null> {
+  if (isTauri()) return invoke<KeyCheck>('check_api_keys');
+  try {
+    const res = await fetch('/api/key-check');
+    return res.ok ? ((await res.json()) as KeyCheck) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Write an export next to the user's other downloads and hand back the path.
+ * Null in the browser, which downloads it itself.
+ */
+export const saveExport = (json: string): Promise<string | null> =>
+  invoke<string>('save_export', { json });
+
+export async function revealPath(path: string): Promise<void> {
   try {
     const { revealItemInDir } = await import('@tauri-apps/plugin-opener');
     await revealItemInDir(path);
   } catch {
     // nothing to open — the browser build has no folder to show
   }
+}
+
+export async function revealBackup(): Promise<void> {
+  const path = await backupLocation();
+  if (path) await revealPath(path);
 }
 
 export async function isAutostartEnabled(): Promise<boolean> {

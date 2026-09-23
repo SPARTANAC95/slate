@@ -16,7 +16,12 @@ const toQuery = (params: Params): string => {
   return q.toString();
 };
 
-/** snake_case the keys rust expects, without touching the web query names */
+/**
+ * Tauri matches command arguments camelCase-to-snake_case itself, so a plain
+ * param name needs nothing done to it. This only exists for the kebab-cased
+ * ones the web query strings could use — `current-date` style names in params
+ * rather than in the route.
+ */
 const toRustArgs = (params: Params): Record<string, unknown> => {
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(params)) {
@@ -46,6 +51,25 @@ export async function apiGet<T>(route: ApiRoute, params: Params): Promise<T | nu
     const res = await fetch(`/api/${route}?${toQuery(params)}`);
     if (!res.ok) return null;
     return (await res.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The best snapshot on disk, as the raw file text — the current mirror if it
+ * holds anything, else the newest history copy that does. Null when there is
+ * none, or no disk to ask.
+ */
+export async function readBackup(): Promise<string | null> {
+  try {
+    if (isTauri()) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      return ((await invoke('read_backup')) as string | null) ?? null;
+    }
+    const res = await fetch('/api/backup');
+    if (!res.ok || res.status === 204) return null;
+    return await res.text();
   } catch {
     return null;
   }

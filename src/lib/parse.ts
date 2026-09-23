@@ -8,6 +8,8 @@ export type ParsedEntry = {
   /** how the kind was decided — M3's API lookup only overrides 'default' */
   kindSource: 'tag' | 'pattern' | 'default';
   date: string | null;
+  /** 'HH:mm' if an hour was typed — `20:00`, `at 8pm` */
+  time: string | null;
   annual: boolean;
   series: { season: number; episode: number } | null;
   /** `s3` with no episode — add the whole season at once */
@@ -165,6 +167,39 @@ export function parseQuickAdd(input: string, now: Date = new Date()): ParsedEntr
     if (date) break;
   }
 
+  // time last: the date passes have already eaten `19.11.` and `2026-08-14`,
+  // so what is left of a `\d:\d` or `8pm` shape really is a clock reading
+  const time = ((): string | null => {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    /** 12h suffix → 24h hour, or null if the hour can't carry one */
+    const shift = (h: number, suffix?: string): number | null => {
+      if (!suffix) return h;
+      if (h > 12) return null;
+      if (suffix === 'pm') return h === 12 ? 12 : h + 12;
+      return h === 12 ? 0 : h;
+    };
+    const clock = /\b(?:at\s+|u\s+)?([01]?\d|2[0-3]):([0-5]\d)\s*(am|pm)?\b/.exec(norm);
+    if (clock) {
+      const h = shift(Number(clock[1]), clock[3]);
+      if (h !== null) {
+        cut(clock.index, clock[0].length);
+        return `${pad(h)}:${clock[2]}`;
+      }
+    }
+    const meridiem = /\b(?:at\s+)?(\d{1,2})\s*(am|pm)\b/.exec(norm);
+    if (meridiem) {
+      const h = shift(Number(meridiem[1]), meridiem[2]);
+      if (h !== null) {
+        cut(meridiem.index, meridiem[0].length);
+        return `${pad(h)}:00`;
+      }
+    }
+    return null;
+  })();
+
+  // an hour with no day is today's hour — "kickoff 21:00" is not a backlog item
+  if (date === null && time !== null) date = toISODate(today);
+
   // title = whatever wasn't consumed, tidied up. indexed by utf-16 unit to
   // match the cut ranges, which come from regex offsets on `norm`
   const title = Array.from({ length: input.length }, (_, i) => input[i])
@@ -179,5 +214,5 @@ export function parseQuickAdd(input: string, now: Date = new Date()): ParsedEntr
     kind ?? (isSeries ? 'series' : annual ? 'event' : impliesTask ? 'task' : 'note');
   const kindSource = kind ? 'tag' : isSeries || annual || impliesTask ? 'pattern' : 'default';
 
-  return { title, kind: resolvedKind, kindSource, date, annual, series, wholeSeason, tags };
+  return { title, kind: resolvedKind, kindSource, date, time, annual, series, wholeSeason, tags };
 }

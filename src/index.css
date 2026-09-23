@@ -98,6 +98,43 @@ body {
     transition: opacity 150ms ease-out;
   }
 
+  /* Native controls draw themselves. Without this the select popup renders
+     as the platform's white list — with white option text on it, which is
+     unreadable. Set both halves explicitly rather than trusting the theme. */
+  select,
+  option,
+  optgroup {
+    color-scheme: dark;
+    background-color: var(--color-panel);
+    color: var(--color-text);
+  }
+  select:disabled {
+    color: var(--color-text-3);
+  }
+
+  /* checkboxes, radios and the date/time picker follow the same restraint —
+     no windows blue anywhere */
+  input[type='checkbox'],
+  input[type='radio'],
+  input[type='range'] {
+    accent-color: var(--color-text);
+  }
+  input[type='date'],
+  input[type='time'],
+  input[type='number'] {
+    color-scheme: dark;
+  }
+  /* the picker glyphs sit at text-3 until the field is worth looking at */
+  ::-webkit-calendar-picker-indicator {
+    opacity: 0.45;
+    cursor: pointer;
+    transition: opacity 150ms ease-out;
+  }
+  input:hover::-webkit-calendar-picker-indicator,
+  input:focus::-webkit-calendar-picker-indicator {
+    opacity: 0.9;
+  }
+
   ::selection {
     background: rgba(255, 255, 255, 0.14);
   }
@@ -165,7 +202,9 @@ body {
   }
 }
 
-@media (max-width: 900px) {
+/* strictly below the window's 900px minimum: at exactly 900 the app must
+   still draw, or the desktop window at its smallest size shows only this */
+@media (max-width: 899px) {
   #root { display: none; }
   body::after {
     content: 'slate needs a bigger screen — open it on desktop.';

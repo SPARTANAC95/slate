@@ -24,6 +24,21 @@ describe('normalizeEntry', () => {
     expect(e.dateHistory).toEqual([{ date: '2026-08-14', changedAt: 0, source: 'manual' }]);
   });
 
+  it('gives a blank title something to click on', () => {
+    expect(normalizeEntry({ id: 'a', title: '   ' })!.title).toBe('untitled');
+    expect(normalizeEntry({ id: 'a', title: 'Dune' })!.title).toBe('Dune');
+  });
+
+  it('keeps only ratings the five squares can draw', () => {
+    const rating = (v: unknown) => normalizeEntry({ id: 'a', title: 'x', rating: v })!.rating;
+    expect(rating(3)).toBe(3);
+    expect(rating(5)).toBe(5);
+    expect(rating(0)).toBeNull();
+    expect(rating(6)).toBeNull();
+    expect(rating(2.5)).toBeNull();
+    expect(rating('4')).toBeNull();
+  });
+
   it('drops dates that are not YYYY-MM-DD', () => {
     expect(normalizeEntry({ id: 'a', title: 'x', date: 'tomorrow' })!.date).toBeNull();
     expect(normalizeEntry({ id: 'a', title: 'x', date: 12345 })!.date).toBeNull();
@@ -42,9 +57,23 @@ describe('normalizeEntry', () => {
   it('keeps only well-formed external links', () => {
     expect(normalizeEntry({ id: 'a', title: 'x', external: { source: 'nope', id: '1' } })!.external)
       .toBeNull();
+    for (const source of ['tmdb', 'igdb', 'steam'] as const) {
+      expect(
+        normalizeEntry({ id: 'a', title: 'x', external: { source, id: '1' } })!.external,
+      ).toEqual({ source, id: '1', posterUrl: null });
+    }
+  });
+
+  // rawg is retired, but an entry added while it was alive still owns its
+  // poster — dropping the link would strip cover art off old games
+  it('keeps the link from a retired provider rather than voiding it', () => {
     expect(
-      normalizeEntry({ id: 'a', title: 'x', external: { source: 'tmdb', id: '1' } })!.external,
-    ).toEqual({ source: 'tmdb', id: '1', posterUrl: null });
+      normalizeEntry({
+        id: 'a',
+        title: 'x',
+        external: { source: 'rawg', id: '3498', posterUrl: 'https://media.rawg.io/a.jpg' },
+      })!.external,
+    ).toEqual({ source: 'rawg', id: '3498', posterUrl: 'https://media.rawg.io/a.jpg' });
   });
 
   it('discards junk history rows but keeps valid ones', () => {
@@ -64,6 +93,36 @@ describe('normalizeEntry', () => {
     const e = normalizeEntry({ id: 'a', title: 'x', links: 'http://x', tags: 3 })!;
     expect(e.links).toEqual([]);
     expect(e.tags).toEqual([]);
+  });
+
+  it('keeps a well-formed time and drops anything else', () => {
+    const at = (time: unknown) =>
+      normalizeEntry({ id: 'a', title: 'x', date: '2026-08-14', time })!.time;
+    expect(at('20:45')).toBe('20:45');
+    expect(at('00:00')).toBe('00:00');
+    expect(at('24:00')).toBeNull();
+    expect(at('7:30')).toBeNull(); // unpadded never reaches the db
+    expect(at(2045)).toBeNull();
+  });
+
+  it('drops a time that has no day to sit on', () => {
+    expect(normalizeEntry({ id: 'a', title: 'x', time: '20:45' })!.time).toBeNull();
+  });
+
+  it('infers the date pin from an older export that predates the flag', () => {
+    // my own last date change → mine to keep
+    expect(normalizeEntry({ id: 'a', title: 'x', date: '2026-08-14' })!.datePinned).toBe(true);
+    // the provider set it last → let the provider keep moving it
+    const followed = normalizeEntry({
+      id: 'a',
+      title: 'x',
+      date: '2026-08-14',
+      dateHistory: [{ date: '2026-08-14', changedAt: 1, source: 'api' }],
+    })!;
+    expect(followed.datePinned).toBe(false);
+    // an explicit flag always wins
+    expect(normalizeEntry({ id: 'a', title: 'x', date: '2026-08-14', datePinned: false })!
+      .datePinned).toBe(false);
   });
 });
 

@@ -116,6 +116,43 @@ describe('date formats', () => {
   });
 });
 
+describe('times', () => {
+  it('24h and 12h forms, with and without "at"', () => {
+    expect(p('match tomorrow 20:45')).toMatchObject({
+      title: 'match',
+      date: '2026-08-15',
+      time: '20:45',
+    });
+    expect(p('dinner friday at 8pm').time).toBe('20:00');
+    expect(p('call 9am sutra').time).toBe('09:00');
+    expect(p('brunch 12am').time).toBe('00:00');
+    expect(p('lunch 12pm').time).toBe('12:00');
+  });
+
+  it('the hour leaves the title', () => {
+    expect(p('match tomorrow 20:45').title).toBe('match');
+    expect(p('dinner friday at 8pm').title).toBe('dinner');
+  });
+
+  it('an hour with no day means today', () => {
+    expect(p('kickoff 21:00')).toMatchObject({ date: '2026-08-14', time: '21:00' });
+  });
+
+  it('leaves dates, versions and numbers alone', () => {
+    expect(p('GTA 6 19.11.').time).toBeNull();
+    expect(p('Patch 1.5 notes').time).toBeNull();
+    expect(p('x 2026-12-18').time).toBeNull();
+    expect(p('Mass Effect 3').time).toBeNull();
+    expect(p('Silo s3e4 tomorrow').time).toBeNull();
+  });
+
+  it('a nonsense 12h hour is left in the title', () => {
+    const r = p('x 19pm');
+    expect(r.time).toBeNull();
+    expect(r.title).toBe('x 19pm');
+  });
+});
+
 describe('non-ascii titles keep their characters', () => {
   it('an emoji before the date does not shift the cut', () => {
     const r = p('🎉 party friday');

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { onWindowGoingAway } from './lifecycle';
 
 type Options = {
   /** the stored text; undefined while it is still loading */
@@ -8,6 +9,9 @@ type Options = {
   save: (text: string) => void;
   delay?: number;
 };
+
+/** uncommitted text, carrying the save that belongs to it */
+type Pending = { text: string; save: (text: string) => void };
 
 /**
  * A text field that saves itself: `delay` ms after typing stops, on blur, and
@@ -19,13 +23,14 @@ export function useAutosaveText({ stored, resetKey, save, delay = 500 }: Options
   const [value, setValue] = useState('');
   const seededFor = useRef<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pending = useRef<string | null>(null);
-  const saveRef = useRef(save);
-  saveRef.current = save;
+  const pending = useRef<Pending | null>(null);
 
   useEffect(() => {
     if (stored === undefined) return;
-    if (seededFor.current !== resetKey) {
+    // Imports and restores can change the current day's note (or verdict)
+    // without changing its key. Reflect that update when we have no unsaved
+    // typing, while keeping an active draft intact.
+    if (seededFor.current !== resetKey || pending.current === null) {
       seededFor.current = resetKey;
       setValue(stored);
     }
@@ -35,7 +40,7 @@ export function useAutosaveText({ stored, resetKey, save, delay = 500 }: Options
     if (timer.current) clearTimeout(timer.current);
     timer.current = null;
     if (pending.current !== null) {
-      saveRef.current(pending.current);
+      pending.current.save(pending.current.text);
       pending.current = null;
     }
   };
@@ -44,7 +49,12 @@ export function useAutosaveText({ stored, resetKey, save, delay = 500 }: Options
 
   const onChange = (next: string) => {
     setValue(next);
-    pending.current = next;
+    // Capture the save alongside the text, now, while it still points at the
+    // day or entry this was typed under. Reaching for the newest save at flush
+    // time would file half-typed text against whatever you had just switched
+    // to — the parent re-renders with a save aimed at the new target before
+    // this hook's cleanup gets to run.
+    pending.current = { text: next, save };
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => flushRef.current(), delay);
   };
@@ -52,12 +62,10 @@ export function useAutosaveText({ stored, resetKey, save, delay = 500 }: Options
   // commit before the window can go away — hiding to tray, quitting, reload
   useEffect(() => {
     const onHide = () => flushRef.current();
-    addEventListener('pagehide', onHide);
-    addEventListener('beforeunload', onHide);
+    const stop = onWindowGoingAway(onHide);
     document.addEventListener('visibilitychange', onHide);
     return () => {
-      removeEventListener('pagehide', onHide);
-      removeEventListener('beforeunload', onHide);
+      stop();
       document.removeEventListener('visibilitychange', onHide);
     };
   }, []);
