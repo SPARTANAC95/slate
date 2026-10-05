@@ -1,7 +1,8 @@
 const views = {
   calendar: {src:'assets/calendar.png', alt:'Slate month calendar with countdowns, scheduled entries, and a daily note', caption:'The whole month, the next few plans, and a little space for today.'},
   upcoming: {src:'assets/upcoming.png', alt:'Slate upcoming list with countdowns and an undated backlog', caption:'Everything you are waiting for, in order. Even the ideas without a date.'},
-  year: {src:'assets/year.png', alt:'Slate year overview showing scheduled and completed days', caption:'A small record of the plans you made and the things you enjoyed.'}
+  year: {src:'assets/year.png', alt:'Slate year overview showing scheduled and completed days', caption:'A small record of the plans you made and the things you enjoyed.'},
+  backlog: {src:'assets/backlog.png', alt:'Slate Backlog with Edit, Today and Choose date actions for undated ideas', caption:'Give an idea a day, edit its details, or mark it done. Backlog is available in every view.'}
 };
 const screen = document.querySelector('#app-screen');
 const caption = document.querySelector('#screen-caption');

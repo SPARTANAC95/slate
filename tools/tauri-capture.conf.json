@@ -1,0 +1,12 @@
+{
+  "identifier": "com.slate.capture20261005",
+  "app": {
+    "windows": [{
+      "label": "main", "title": "Slate documentation capture",
+      "width": 1440, "height": 960, "minWidth": 900, "minHeight": 600,
+      "resizable": true, "dragDropEnabled": false, "visible": false,
+      "theme": "Dark", "backgroundColor": "#0A0A0B"
+    }]
+  },
+  "bundle": { "createUpdaterArtifacts": false }
+}

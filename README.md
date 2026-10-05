@@ -19,6 +19,8 @@ Slate brings the game you are waiting for, your next film night, weekly episodes
 
 Your calendar lives on your computer. Core planning works without an account or API keys. Online metadata and Google Calendar are optional.
 
+**Current release: [0.1.2](https://github.com/SPARTANAC95/slate/releases/tag/v0.1.2).** It includes one-way Google Calendar sync, signed in-app updates, and Backlog controls for editing, completing and scheduling ideas. [Changelog](CHANGELOG.md) · [Latest validation](docs/VALIDATION.md).
+
 ## What you can do
 
 | Before it happens | When you make time | Afterward |
@@ -47,7 +49,21 @@ Countdowns keep the nearest plans visible. The upcoming view puts all unfinished
 
 ![Slate upcoming view with countdowns and an undated backlog](docs/assets/upcoming.png)
 
-<sub>Real screenshots of Slate's shared UI in an isolated browser session. Titles, plans, and dates are fictional examples. The backup endpoint was simulated for the screenshots; no personal calendar data is shown.</sub>
+### Give your backlog a day
+
+Add an undated idea directly in Backlog, edit it, mark it done, or choose **Today** or **Choose date**. Scheduling opens the entry's day. Backlog is available from Month, Upcoming and Year; completed ideas stay in a collapsible section with Undo.
+
+![Slate 0.1.2 Backlog with editable ideas and Today and Choose date actions](docs/assets/backlog.png)
+
+### Your plans in Google Calendar
+
+Connect your own Desktop OAuth client in the Windows app, choose a writable calendar, and enable **Slate → Google** sync. Dated entries follow edits made in Slate while the app runs, including in the tray. Other Google events are left alone; daily journal notes, ratings, verdicts and undated ideas stay local.
+
+![Native Google Calendar setup showing the one-way sync explanation and credential import, without a connected account](docs/assets/google-calendar.png)
+
+[Set up Google Calendar](docs/GOOGLE-CALENDAR.md). The screenshot shows the real unconnected setup screen; live account sign-in and sync were not exercised for this capture.
+
+<sub>Captured from the native Windows 0.1.2 app on October 5, 2026, using a separate capture profile and the project's fictional sample calendar. The app UI and native backend are unchanged; no personal calendar, credentials or account information is shown. [Screenshot provenance and reproduction](docs/PRESENTATION.md).</sub>
 
 ## Get started in a minute
 
