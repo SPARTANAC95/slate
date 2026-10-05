@@ -33,7 +33,7 @@ Build output:
 
 ```text
 src-tauri/target/release/slate.exe
-src-tauri/target/release/bundle/nsis/Slate_0.1.1_x64-setup.exe
+src-tauri/target/release/bundle/nsis/Slate_0.1.2_x64-setup.exe
 ```
 
 `build:app` creates a development installer without an updater signature. Use `npm run release:build` for a signed public release; see [Releasing Slate](RELEASING.md). Update signatures are separate from a Windows publisher certificate. `slate.cmd` launches a local release build, building it first when missing. `tools/New-Shortcuts.ps1` creates local development shortcuts; the installer creates the normal installed-app entry.
@@ -70,7 +70,7 @@ The platform seam is `src/lib/platform.ts`: browser builds use `/api`, while des
 
 The Pages site is plain HTML/CSS/JavaScript in `docs/`, with no build step or third-party tracking. GitHub Pages publishes the `/docs` folder of `main`.
 
-Screenshots use `docs/sample-calendar.json`, a separate browser profile, a fixed September 23, 2026 clock, and mocked local backup/metadata endpoints. They show the real shared UI, not the native title bar. Never take documentation screenshots from a personal account. Keep images in `docs/assets/`, and update alt text when changing them.
+Current screenshots use the native Windows app with a separate capture application identifier and WebView profile, the original fictional `docs/sample-calendar.json`, and a fixed October 5, 2026 clock. The native backup restore path loads the fixture; native commands are not mocked. See [screenshot provenance and reproduction](PRESENTATION.md). Never take documentation screenshots from a personal account. Keep images in `docs/assets/`, and update alt text when changing them.
 
 For an isolated UI fixture of Google connection states, open `/tools/google-sync-preview.html` through Vite. It is not included in the production build. The optional PowerShell Google recovery helper operates on an existing local account file; ordinary users should connect through Preferences.
 

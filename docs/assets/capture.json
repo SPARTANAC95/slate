@@ -1,0 +1,19 @@
+{
+  "version": "0.1.2",
+  "sourceCommit": "01fad0e8af1582994c4061f426574ddae41ec091",
+  "capturedAt": "2026-10-05T16:47:53.115Z",
+  "clock": "2026-10-05T10:00:00Z",
+  "renderer": "Native Windows WebView2; unmodified frontend and backend",
+  "profile": "Separate capture application identifier and WebView profile",
+  "data": "Fictional docs/sample-calendar.json, dates shifted forward 12 days",
+  "google": "Real native unconnected setup; no account or live sync exercised",
+  "screenshots": [
+    "calendar.png",
+    "quick-add.png",
+    "backlog.png",
+    "upcoming.png",
+    "year.png",
+    "google-calendar.png"
+  ],
+  "pageErrors": []
+}
